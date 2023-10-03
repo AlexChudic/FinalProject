@@ -16,10 +16,21 @@
 * *2 hours* Reading papers
 
 ## Week 1
-### 26 Oct 2023
+### 26 Sep 2023
 * *1.5 hours* Doing more research
 
-### 28 Oct 2023
+### 28 Sep 2023
 * *1 hour* Setup Zotero and import all useful research papers I have come across so far
 * *1 hour* Reading into more papers
 * *1 hours* Reading through the L4 Project Guidance slides and creating timelog
+
+### 29 Sep 2023
+* *0.5 hour* Prep for supervisor meeting
+* *0.5 hour* Supervisor meeting
+* *1 hour* Organizing thoughts, making notes, and looking at papers
+
+### 30 Sep 2023
+* *1 hour* Reading a paper
+
+### 2 Oct 2023
+* *1 hour* Summarizing a paper, looking at a ChatUniTest codebase
