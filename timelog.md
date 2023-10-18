@@ -67,3 +67,17 @@
 * *1 hour* Supervisor meeting prep
 * *1 hour* Supervisor meeting
 * *0.5 hours* Post meeting work
+
+### 14 Oct 2023
+* *1 hour* Reading a paper on ChatGPT Prompt patterns for Improving Code Quality
+* *0,5 hours* Summarizing the paper
+
+
+## Week 4
+### 16 Oct 2023
+* *1 hour* Reading M.Fowler's book about refactoring
+
+### 18 Oct 2023
+* *1 hour* Reading the Refactoring Miner 1.0 paper
+
+
