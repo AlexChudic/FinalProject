@@ -1,3 +1,17 @@
+# Timelog
+
+* Assessing LLMs’ Code Refactoring Skills
+* Alex Chudic
+* 2525381c
+* Handan Gul Calikli
+
+## Guidance
+
+* This file contains the time log for your project. It will be submitted along with your final dissertation.
+* **YOU MUST KEEP THIS UP TO DATE AND UNDER VERSION CONTROL.**
+* This timelog should be filled out honestly, regularly (daily) and accurately. It is for *your* benefit.
+* Follow the structure provided, grouping time by weeks.  Quantise time to the half hour.
+
 ## Week 0
 ### 18 Sep 2023
 * *2 hours* Familiarizing myself with the topic 
