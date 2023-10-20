@@ -92,6 +92,17 @@
 * *1 hour* Reading M.Fowler's book about refactoring
 
 ### 18 Oct 2023
-* *1 hour* Reading the Refactoring Miner 1.0 paper
+* *2 hours* Reading the Refactoring Miner 1.0 paper
+* *0.5 hours* Reading the Refactoring Miner 2.0 paper
+* *1 hour* Looking at the Refactoring Miner documentation and thinking about the setup
+* *1 hour* Brainstorming session with a friend who works in the industry
 
+### 19 Oct 2023
+* *2 hours* Setting up the final project template provided by the uni and getting GitHub repo ready to work locally
 
+### 20 Oct 2023
+* *1 hour* Looking at AutoGen
+* *1,5 hours* Research how other papers work with opensource projects - if there is any overlap
+* *1 hour* Organisation of notes and preparation for the supervisor meeting
+* *0,5 hours* Supervisor meeting
+* *1 hours* Post supervisor work
