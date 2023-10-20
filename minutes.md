@@ -40,4 +40,16 @@
   1. Think about how to curate the dataset, which consists of open-source software projects
      *  Which open-source repo to use? (GitLab, GitHub, BitBucket)
      *  Play with RefactoringMiner, and see how it works
-  2. Think about how one should give input the code into Llma so that Llma can refactor it 
+  2. Think about how one should give input the code into Llma so that Llma can refactor it
+
+
+## Meeting 4 - 20.10.2023
+### Minutes
+* We talked about which projects to use for the refactoring dataset, and how the ChatUniTest paper mentions 5/10 projects it used were not in the training dataset. I will try to go with the same 50/50 ratio.
+* Might be a good idea to include the Abstract Syntax Tree representation of the class in the prompt
+* Should start simple and then scale up the whole process. Will be nice to start with some manual LLM refactoring testing 
+
+###  Next steps
+  1. Make a small dataset of simple refactoring (from tutorials etc.) with the refactored code
+  2. Manually prompt these examples to an LLM to ask for refactoring. Take note of the prompt and results. Start with simple prompts - “Refactor the following code..”. Improve the prompt iteratively, applying prompt patterns and further specifying the requirements
+  3. Produce a document that explains the steps taken and shows the input prompts with the output from the LLM
