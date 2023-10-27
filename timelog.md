@@ -106,3 +106,17 @@
 * *1 hour* Organisation of notes and preparation for the supervisor meeting
 * *0,5 hours* Supervisor meeting
 * *1 hours* Post supervisor work
+
+## Week 5
+### 23 Oct 2023
+* *1 hour* Searching for tutorial refactoring examples
+
+### 26 Oct 2023
+* *2 hours* Researching prompt engineering 
+* *1 hour* Reading J.Whites Prompt Pattern Catalog paper
+
+### 27 Oct 2023
+* *4 hours* Manually testing refactoring capabilities of ChatGPT 3.5
+* *2 hours* Manually testing refactoring capabilities of Llama 2 and CodeLlama
+* *4 hours* Writing down a document about my findings from manual testing
+  
