@@ -123,6 +123,7 @@
 ## Week 6
 ### 2 Nov 2023
 * *1 hour* Searching for repos that are used in the ChatUnitTest paper and not included in the training set of ChatGPT 3.5
+* *1 hour* Getting access to Llama and looking at how to set it up locally
 
 ### 3 Nov 2023
 * *2 hours* Setting up refactoring miner
