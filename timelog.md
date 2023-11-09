@@ -119,4 +119,18 @@
 * *4 hours* Manually testing refactoring capabilities of ChatGPT 3.5
 * *2 hours* Manually testing refactoring capabilities of Llama 2 and CodeLlama
 * *4 hours* Writing down a document about my findings from manual testing
+
+## Week 6
+### 2 Nov 2023
+* *1 hour* Searching for repos that are used in the ChatUnitTest paper and not included in the training set of ChatGPT 3.5
+
+### 3 Nov 2023
+* *2 hours* Setting up refactoring miner
+* *1 hour* Supervisor meeting prep
+* *1 hour* Supervisor meeting
+
+## Week 7
+### 9 Nov 2023
+* *0.5 hours* Post supervisor meeting work 
+
   
