@@ -132,6 +132,15 @@
 
 ## Week 7
 ### 9 Nov 2023
-* *0.5 hours* Post supervisor meeting work 
+* *0.5 hours* Post supervisor meeting work
+
+## Week 8
+### 16 Nov 2023
+* *4 hours* Setting up the Refactoring Miner and playing around with it
+
+### 17 Nov 2023
+* *1 hour* Thinking about priorities in the project - deciding the scope
+* *3 hours* Testing manually some refactoring commits from GitHub vs what LLM does
+* *1 hour* Pre supervisor meeting work
 
   
