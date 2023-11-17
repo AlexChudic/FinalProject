@@ -13,7 +13,9 @@ public final class App {
      * @param args The arguments of the program.
      */
     public static void main(String[] args) {
-        Miner miner = new Miner();
-        miner.runMiner();
+        Miner miner = new Miner("tmp/refactoring-example", 
+                                "https://github.com/guydunton/Refactoring-example-cpp.git", 
+                                "master");
+        miner.fetchRevWalk();
     }
 }
