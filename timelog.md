@@ -142,5 +142,12 @@
 * *1 hour* Thinking about priorities in the project - deciding the scope
 * *3 hours* Testing manually some refactoring commits from GitHub vs what LLM does
 * *1 hour* Pre supervisor meeting work
+* *1 hour* Supervisor meeting
+
+### 18 Nov 2023
+* *2 hours* Looking at the paper by Max Schäfer and Sarah Nadi and how they utilized the normalized edit distance between the unit tests
+
+### 19 Nov 2023
+* *1 hour* Summarizing the Supervisor meeting notes
 
   
