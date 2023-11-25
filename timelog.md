@@ -150,4 +150,14 @@
 ### 19 Nov 2023
 * *1 hour* Summarizing the Supervisor meeting notes
 
+## Week 9
+### 23 Nov 2023
+* *6 hours* Researching the evaluation metrics for code quality by reading multiple papers, looking at sonarqube documentation, etc.
+
+### 24 Nov 2023
+* *1 hour* Organising papers saved on Zotero
+* *1 hour* Summarising some of the papers I looked at previously
+* *0.5 hour* Thinking about the workflow of the research
+* *0.5 hour* Pre supervisor meeting work
+* *1.5 hours* Supervisor meeting
   
