@@ -1,5 +1,6 @@
 package refactoring_mining;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -16,6 +17,13 @@ import org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl;
 import org.refactoringminer.util.GitServiceImpl;
 
 import gr.uom.java.xmi.UMLModel;
+import gr.uom.java.xmi.decomposition.AbstractCodeFragment;
+import gr.uom.java.xmi.decomposition.AbstractCodeMapping;
+import gr.uom.java.xmi.decomposition.CompositeStatementObject;
+import gr.uom.java.xmi.decomposition.StatementObject;
+import gr.uom.java.xmi.decomposition.UMLOperationBodyMapper;
+import gr.uom.java.xmi.diff.CodeRange;
+import gr.uom.java.xmi.diff.ExtractOperationRefactoring;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
 
@@ -81,6 +89,21 @@ public class Miner {
         
     }
 
+    private void getRefactoringLines(Refactoring ref){
+        if(ref instanceof ExtractOperationRefactoring) {
+            ExtractOperationRefactoring ex = (ExtractOperationRefactoring) ref;
+            UMLOperationBodyMapper bodyMapper = ex.getBodyMapper();
+            UMLOperationBodyMapper parentMapper = bodyMapper.getParentMapper();
+
+            CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
+            System.out.println( newCodeRange.toString() );
+
+            CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeExtraction();
+            System.out.println( parentCodeRange.toString() );
+            
+        }
+    }
+
     public void detectAllCommits(){
         try {
             miner.detectAll(this.repo, this.branch, new RefactoringHandler() {
@@ -89,6 +112,8 @@ public class Miner {
                     System.out.println("Refactorings at " + commitId);
                     for (Refactoring ref : refactorings) {
                         System.out.println(ref.toString());
+                        getRefactoringLines(ref);
+                        
                     }
                 }
             });
