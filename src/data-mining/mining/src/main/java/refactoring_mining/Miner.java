@@ -1,5 +1,6 @@
 package refactoring_mining;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,6 +27,13 @@ import gr.uom.java.xmi.diff.CodeRange;
 import gr.uom.java.xmi.diff.ExtractOperationRefactoring;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -89,31 +97,98 @@ public class Miner {
         
     }
 
+    // TESTING other refactoring miner functionality
     private void getRefactoringLines(Refactoring ref){
-        if(ref instanceof ExtractOperationRefactoring) {
+        if(ref instanceof ExtractOperationRefactoring) { //TODO do this for all refactoring types
             ExtractOperationRefactoring ex = (ExtractOperationRefactoring) ref;
             UMLOperationBodyMapper bodyMapper = ex.getBodyMapper();
             UMLOperationBodyMapper parentMapper = bodyMapper.getParentMapper();
+            Set<AbstractCodeMapping> mappings = bodyMapper.getMappings();
+            Set<AbstractCodeFragment> codeFragment = ex.getExtractedCodeFragmentsFromSourceOperation();
+            Set<AbstractCodeFragment> codeFragment2 = ex.getExtractedCodeFragmentsToExtractedOperation();
 
+            System.out.println( "BEFORE" );
             CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
             System.out.println( newCodeRange.toString() );
+            for (AbstractCodeFragment abstractCodeFragment : codeFragment2) {
+                System.out.println( abstractCodeFragment.getParent() );
+                System.out.println( abstractCodeFragment.getArgumentizedString() );
+            }
 
+            System.out.println( "AFTER" );
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeExtraction();
             System.out.println( parentCodeRange.toString() );
+
+            for (AbstractCodeFragment abstractCodeFragment : codeFragment) {
+                System.out.println( abstractCodeFragment.getArgumentizedString() );
+            }
             
         }
     }
 
-    public void detectAllCommits(){
+    private JSONObject getRefactoringData(Refactoring ref, String folderPath){
+        JSONObject json = new JSONObject();
+        if(ref instanceof ExtractOperationRefactoring) { //TODO do this for all refactoring types
+            ExtractOperationRefactoring ex = (ExtractOperationRefactoring) ref;
+            CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeExtraction();
+            CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
+            
+            try {
+                JSONObject parentFile = new JSONObject();
+                JSONObject newFile = new JSONObject();
+
+                parentFile.put("startLine", String.valueOf(parentCodeRange.getStartLine()));
+                parentFile.put("endLine", String.valueOf(parentCodeRange.getEndLine()));
+                ArrayList<String> parentFileCode = new ArrayList<String>();
+                for( String line : Files.readAllLines(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
+                    parentFileCode.add(line);
+                }
+                newFile.put("file", new JSONArray(parentFileCode));
+
+                newFile.put("startLine", String.valueOf(newCodeRange.getStartLine()));
+                newFile.put("endLine", String.valueOf(newCodeRange.getEndLine()));
+                ArrayList<String> newFileCode = new ArrayList<String>();
+                for( String line : Files.readAllLines(Paths.get(folderPath + "/" + newCodeRange.getFilePath()))){
+                    newFileCode.add(line);
+                }
+                newFile.put("file", new JSONArray(newFileCode));
+
+                json.put("refactoringType", ref.getRefactoringType().toString());
+                json.put("description", ref.toString());
+                json.put("beforeRefactoring", parentFile);
+                json.put("afterRefactoring", newFile);
+                return json;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return json;
+    }
+
+    private void buildPromptContext(Refactoring ref, String refId, String folderPath){
+        JSONObject json = getRefactoringData(ref, folderPath);
+        String filePath = "refactoring-data/" + folderPath.substring(4) + "/" + refId + ".json";
+
+        try (FileWriter fileWriter = new FileWriter(filePath)){
+            fileWriter.write(json.toString());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void detectAllCommits(String folderPath){
         try {
             miner.detectAll(this.repo, this.branch, new RefactoringHandler() {
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
                     System.out.println("Refactorings at " + commitId);
+                    int id = 0;
                     for (Refactoring ref : refactorings) {
                         System.out.println(ref.toString());
-                        getRefactoringLines(ref);
-                        
+                        String refId = commitId + "-" + id;
+                        buildPromptContext(ref, refId, folderPath);
+                        id++;
                     }
                 }
             });

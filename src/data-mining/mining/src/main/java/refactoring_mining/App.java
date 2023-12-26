@@ -17,10 +17,10 @@ public final class App {
         // Miner miner = new Miner("tmp/code-smells-refactoring-training-java", 
         //                         "https://github.com/Codesai/code-smells-refactoring-training-java.git", 
         //                         "master");
-
-        Miner miner = new Miner("tmp/refactoring-toy-example", 
+        String folderPath = "tmp/refactoring-toy-example";
+        Miner miner = new Miner(folderPath, 
                                 "https://github.com/danilofes/refactoring-toy-example.git", 
                                 "master");
-        miner.detectAllCommits();
+        miner.detectAllCommits(folderPath);
     }
 }
