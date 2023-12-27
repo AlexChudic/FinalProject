@@ -23,9 +23,14 @@ import gr.uom.java.xmi.decomposition.AbstractCodeMapping;
 import gr.uom.java.xmi.decomposition.CompositeStatementObject;
 import gr.uom.java.xmi.decomposition.StatementObject;
 import gr.uom.java.xmi.decomposition.UMLOperationBodyMapper;
+import gr.uom.java.xmi.diff.ChangeVariableTypeRefactoring;
 import gr.uom.java.xmi.diff.CodeRange;
 import gr.uom.java.xmi.diff.ExtractOperationRefactoring;
+import gr.uom.java.xmi.diff.InlineOperationRefactoring;
+import gr.uom.java.xmi.diff.MoveAttributeRefactoring;
+import gr.uom.java.xmi.diff.MoveOperationRefactoring;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
+import gr.uom.java.xmi.diff.RenameOperationRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
 
 import org.json.JSONArray;
@@ -126,42 +131,76 @@ public class Miner {
         }
     }
 
+    private JSONObject createJSONForRefactoring(Refactoring ref, CodeRange parentCodeRange, CodeRange newCodeRange, String folderPath){
+        JSONObject json = new JSONObject();
+        json.put("refactoringType", ref.getRefactoringType().toString());
+        json.put("description", ref.toString());
+        try {
+            JSONObject parentFile = new JSONObject();
+            JSONObject newFile = new JSONObject();
+
+            parentFile.put("startLine", String.valueOf(parentCodeRange.getStartLine()));
+            parentFile.put("endLine", String.valueOf(parentCodeRange.getEndLine()));
+            ArrayList<String> parentFileCode = new ArrayList<String>();
+            for( String line : Files.readAllLines(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
+                parentFileCode.add(line);
+            }
+            parentFile.put("file", new JSONArray(parentFileCode));
+
+            newFile.put("startLine", String.valueOf(newCodeRange.getStartLine()));
+            newFile.put("endLine", String.valueOf(newCodeRange.getEndLine()));
+            ArrayList<String> newFileCode = new ArrayList<String>();
+            for( String line : Files.readAllLines(Paths.get(folderPath + "/" + newCodeRange.getFilePath()))){
+                newFileCode.add(line);
+            }
+            newFile.put("file", new JSONArray(newFileCode));
+
+            json.put("beforeRefactoring", parentFile);
+            json.put("afterRefactoring", newFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
+        return json;
+    }
+
     private JSONObject getRefactoringData(Refactoring ref, String folderPath){
         JSONObject json = new JSONObject();
-        if(ref instanceof ExtractOperationRefactoring) { //TODO do this for all refactoring types
+        if(ref instanceof ExtractOperationRefactoring) { 
             ExtractOperationRefactoring ex = (ExtractOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeExtraction();
             CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
-            
-            try {
-                JSONObject parentFile = new JSONObject();
-                JSONObject newFile = new JSONObject();
 
-                parentFile.put("startLine", String.valueOf(parentCodeRange.getStartLine()));
-                parentFile.put("endLine", String.valueOf(parentCodeRange.getEndLine()));
-                ArrayList<String> parentFileCode = new ArrayList<String>();
-                for( String line : Files.readAllLines(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
-                    parentFileCode.add(line);
-                }
-                newFile.put("file", new JSONArray(parentFileCode));
-
-                newFile.put("startLine", String.valueOf(newCodeRange.getStartLine()));
-                newFile.put("endLine", String.valueOf(newCodeRange.getEndLine()));
-                ArrayList<String> newFileCode = new ArrayList<String>();
-                for( String line : Files.readAllLines(Paths.get(folderPath + "/" + newCodeRange.getFilePath()))){
-                    newFileCode.add(line);
-                }
-                newFile.put("file", new JSONArray(newFileCode));
-
-                json.put("refactoringType", ref.getRefactoringType().toString());
-                json.put("description", ref.toString());
-                json.put("beforeRefactoring", parentFile);
-                json.put("afterRefactoring", newFile);
-                return json;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
         }
+        if(ref instanceof InlineOperationRefactoring) { 
+            InlineOperationRefactoring ex = (InlineOperationRefactoring) ref;
+            CodeRange parentCodeRange = ex.getTargetOperationCodeRangeBeforeInline();
+            CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterInline();
+
+            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+        }
+        if(ref instanceof RenameOperationRefactoring) { 
+            RenameOperationRefactoring ex = (RenameOperationRefactoring) ref;
+            CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeRename();
+            CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterRename();
+
+            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+        }
+        if(ref instanceof MoveOperationRefactoring) { 
+            MoveOperationRefactoring ex = (MoveOperationRefactoring) ref;
+            CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeMove();
+            CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterMove();
+
+            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+        }
+        if(ref instanceof MoveAttributeRefactoring) { 
+            MoveAttributeRefactoring ex = (MoveAttributeRefactoring) ref;
+            CodeRange parentCodeRange = ex.getSourceAttributeCodeRangeBeforeMove();
+            CodeRange newCodeRange = ex.getTargetAttributeCodeRangeAfterMove();
+
+            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+        }
+
         return json;
     }
 
