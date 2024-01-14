@@ -157,7 +157,73 @@
 ### 24 Nov 2023
 * *1 hour* Organising papers saved on Zotero
 * *1 hour* Summarising some of the papers I looked at previously
-* *0.5 hour* Thinking about the workflow of the research
+* *0.5 hours* Thinking about the workflow of the research
 * *0.5 hour* Pre supervisor meeting work
 * *1.5 hours* Supervisor meeting
+
+## Week 12
+### 15 Dec 2023 
+* *1 hour* Create a method that gets the lines for which
+* *1 hour* Think about the format in which the code will be plugged into the LLM
+* *3 hours* Writing the Status Report
+
+## Week 13
+### 18 Dec 2023 
+* *3.5 hours* Setting up Llama in collab
+
+### 19 Dec 2023
+* *1 hour* Looking at ChatUnitTest code, trying to see how they parse the codebase for the LLM
+* *0.5 hours* Look at ASTs and java parsers
+
+### 20 Dec 2023
+* *0.5 hour* Looking further at the ChatUnitTest codebase
+* *1 hour* Formulating the pipeline requirements and writing down the progress done so far 
+* *0.5 hour* 
+
+### 22 Dec 2023
+* *2 hours* Trying to create a method for extracting the exact code of the refactoring
+* *1 hour* Supervisor meeting
+
+### 23 Dec 2023
+* *3 hours* Create a method that generates the method for generating a json from the refactoring data - including the start & end lines, and the file code
+
+## Week 14
+### 26 Dec 2023
+* *2 hours* Looking at refactoring minor and making sure content for multiple refactoring types is correctly extracted
+
+### 27 Dec 2023
+* *2 hours* Load the jsons into jupyter notebook
+* *2 hours* Pre-processing the loaded data
+* *2 hours* Running the Llama LLMs, to finish up the query
+
+### 28 Dec 2023 
+* *1.5 hours* Extracting the processed data into jsons
+
+### 29 Dec 2023
+* *2 hours* Trying to get Llama to work
+
+## Week 15
+### 2 Jan 2024
+* *1 hour* Researching Langchain
+* *1 hour* Researching GPU acceleration
+
+### 4 Jan 2024
+* *2 hours* 
+
+### 5 Jan 2024
+* *3 hours* Setting up ChatGPT, and rewriting the Llama functionality
+* *1 hour* Prompting the toy-example refactorings into ChatGPT and extracting jsons
+
+## Week 16
+### 11 Jan 2024
+* *1 hour* 
+
+### 12 Jan 2024
+* *2 hours* Setting up the Sonarqube locally
+
+### 14 Jan 2024
+* *0.5 hours* Setting up the OPENAI_API_KEY into the .env file
+* *0.5 hours* Writing down timelog for the holidays
+
+## Week 17
   
