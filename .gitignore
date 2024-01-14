@@ -27,6 +27,7 @@ share/python-wheels/
 MANIFEST
 tmp/
 refactoring-data/
+runModel/
 .vscode/
 .DS_Store
 
