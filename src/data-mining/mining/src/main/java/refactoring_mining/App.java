@@ -7,7 +7,7 @@ import refactoring_mining.Miner;
 public final class App {
     private App() {
     }
-
+    // sqp_3879eda2af9477bdba56f5a4424c1a2878fca91a
     /**
      * Says hello to the world.
      * @param args The arguments of the program.
@@ -21,6 +21,13 @@ public final class App {
         Miner miner = new Miner(folderPath, 
                                 "https://github.com/danilofes/refactoring-toy-example.git", 
                                 "master");
-        miner.detectAllCommits(folderPath);
+        // String folderPath = "tmp/retrofit";
+        // Miner miner = new Miner(folderPath, 
+        //                         "https://github.com/square/retrofit.git", 
+        //                         "master");
+        
+        // miner.detectAllCommits(folderPath);
+        RepositoryEvaluator evaluator = new RepositoryEvaluator(folderPath);
+        evaluator.evaluateRepository();
     }
 }

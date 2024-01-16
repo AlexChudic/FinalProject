@@ -25,7 +25,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-tmp/
+tmp/*
+!tmp/evaluate-repository.sh
 refactoring-data/
 runModel/
 .vscode/
