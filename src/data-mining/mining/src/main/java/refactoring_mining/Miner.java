@@ -9,6 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.refactoringminer.api.GitHistoryRefactoringMiner;
 import org.refactoringminer.api.GitService;
@@ -23,6 +24,7 @@ import gr.uom.java.xmi.decomposition.AbstractCodeMapping;
 import gr.uom.java.xmi.decomposition.CompositeStatementObject;
 import gr.uom.java.xmi.decomposition.StatementObject;
 import gr.uom.java.xmi.decomposition.UMLOperationBodyMapper;
+import gr.uom.java.xmi.diff.AddParameterRefactoring;
 import gr.uom.java.xmi.diff.ChangeVariableTypeRefactoring;
 import gr.uom.java.xmi.diff.CodeRange;
 import gr.uom.java.xmi.diff.ExtractOperationRefactoring;
@@ -38,6 +40,7 @@ import org.json.JSONObject;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.eclipse.jgit.lib.Repository;
@@ -75,7 +78,7 @@ public class Miner {
                 RevCommit currentCommit = it.next();
                 Set<String> filePathsBefore = new LinkedHashSet<String>();
                 Set<String> filePathsCurrent = new LinkedHashSet<String>();
-                Map<String, String> renamedFilesHint = new HashMap<String, String>();
+                                Map<String, String> renamedFilesHint = new HashMap<String, String>();
                 gitService.fileTreeDiff(this.repo, currentCommit, filePathsBefore, filePathsCurrent, renamedFilesHint);
                 
                 Set<String> repositoryDirectoriesBefore = new LinkedHashSet<String>();
@@ -131,30 +134,42 @@ public class Miner {
         }
     }
 
-    private JSONObject createJSONForRefactoring(Refactoring ref, CodeRange parentCodeRange, CodeRange newCodeRange, String folderPath){
+    private JSONObject createJSONForRefactoring(Refactoring ref, String refId, CodeRange parentCodeRange, CodeRange newCodeRange, String folderPath){
         JSONObject json = new JSONObject();
         json.put("refactoringType", ref.getRefactoringType().toString());
         json.put("description", ref.toString());
+        json.put("path", folderPath);
+        json.put("commitId", refId);
         try {
             JSONObject parentFile = new JSONObject();
             JSONObject newFile = new JSONObject();
 
             parentFile.put("startLine", String.valueOf(parentCodeRange.getStartLine()));
             parentFile.put("endLine", String.valueOf(parentCodeRange.getEndLine()));
-            ArrayList<String> parentFileCode = new ArrayList<String>();
-            for( String line : Files.readAllLines(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
-                parentFileCode.add(line);
+            parentFile.put("filePath", parentCodeRange.getFilePath());
+            
+            // System.out.println( folderPath + "/" + parentCodeRange.getFilePath() );
+            // try ( Stream<Path> files = Files.list(Paths.get(folderPath+"/src"))) {
+            //     files.forEach(System.out::println);
+            // }
+            if( Files.exists(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
+                ArrayList<String> parentFileCode = new ArrayList<String>();
+                for( String line : Files.readAllLines(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
+                    parentFileCode.add(line);
+                }
+                parentFile.put("file", new JSONArray(parentFileCode));
             }
-            parentFile.put("file", new JSONArray(parentFileCode));
 
             newFile.put("startLine", String.valueOf(newCodeRange.getStartLine()));
             newFile.put("endLine", String.valueOf(newCodeRange.getEndLine()));
-            ArrayList<String> newFileCode = new ArrayList<String>();
-            for( String line : Files.readAllLines(Paths.get(folderPath + "/" + newCodeRange.getFilePath()))){
-                newFileCode.add(line);
+            newFile.put("filePath", newCodeRange.getFilePath());
+            if ( Files.exists(Paths.get(folderPath + "/" + newCodeRange.getFilePath())) ){
+                ArrayList<String> newFileCode = new ArrayList<String>();
+                for( String line : Files.readAllLines(Paths.get(folderPath + "/" + newCodeRange.getFilePath()))){
+                    newFileCode.add(line);
+                }
+                newFile.put("file", new JSONArray(newFileCode));
             }
-            newFile.put("file", new JSONArray(newFileCode));
-
             json.put("beforeRefactoring", parentFile);
             json.put("afterRefactoring", newFile);
         } catch (Exception e) {
@@ -163,49 +178,57 @@ public class Miner {
         return json;
     }
 
-    private JSONObject getRefactoringData(Refactoring ref, String folderPath){
+    private JSONObject getRefactoringData(Refactoring ref, String refId, String folderPath){
         JSONObject json = new JSONObject();
         if(ref instanceof ExtractOperationRefactoring) { 
             ExtractOperationRefactoring ex = (ExtractOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeExtraction();
             CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
 
-            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
-        }
-        if(ref instanceof InlineOperationRefactoring) { 
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        else if(ref instanceof InlineOperationRefactoring) { 
             InlineOperationRefactoring ex = (InlineOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getTargetOperationCodeRangeBeforeInline();
             CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterInline();
 
-            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
-        if(ref instanceof RenameOperationRefactoring) { 
+        else if(ref instanceof RenameOperationRefactoring) { 
             RenameOperationRefactoring ex = (RenameOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeRename();
             CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterRename();
 
-            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
-        if(ref instanceof MoveOperationRefactoring) { 
+        else if(ref instanceof MoveOperationRefactoring) { 
             MoveOperationRefactoring ex = (MoveOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeMove();
             CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterMove();
 
-            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
-        if(ref instanceof MoveAttributeRefactoring) { 
+        else if(ref instanceof MoveAttributeRefactoring) { 
             MoveAttributeRefactoring ex = (MoveAttributeRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceAttributeCodeRangeBeforeMove();
             CodeRange newCodeRange = ex.getTargetAttributeCodeRangeAfterMove();
 
-            json = createJSONForRefactoring(ref, parentCodeRange, newCodeRange, folderPath);
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
+        if( ref instanceof AddParameterRefactoring){
+            AddParameterRefactoring ex = (AddParameterRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
 
         return json;
     }
 
     private void buildPromptContext(Refactoring ref, String refId, String folderPath){
-        JSONObject json = getRefactoringData(ref, folderPath);
+        JSONObject json = getRefactoringData(ref, refId, folderPath);
         String filePath = "refactoring-data/" + folderPath.substring(4) + "/" + refId + ".json";
 
         try (FileWriter fileWriter = new FileWriter(filePath)){
@@ -216,7 +239,7 @@ public class Miner {
         }
     }
 
-    public void detectAllCommits(String folderPath){
+    public void generateJsonForAllRefactorings(String folderPath){
         try {
             miner.detectAll(this.repo, this.branch, new RefactoringHandler() {
                 @Override

@@ -7,7 +7,7 @@ import refactoring_mining.Miner;
 public final class App {
     private App() {
     }
-    // sqp_3879eda2af9477bdba56f5a4424c1a2878fca91a
+
     /**
      * Says hello to the world.
      * @param args The arguments of the program.
@@ -26,8 +26,10 @@ public final class App {
         //                         "https://github.com/square/retrofit.git", 
         //                         "master");
         
-        // miner.detectAllCommits(folderPath);
-        RepositoryEvaluator evaluator = new RepositoryEvaluator(folderPath);
-        evaluator.evaluateRepository();
+        miner.generateJsonForAllRefactorings(folderPath);
+        // miner.fetchRevWalk();
+        
+        // RepositoryEvaluator evaluator = new RepositoryEvaluator(folderPath);
+        // evaluator.evaluateRepository();
     }
 }
