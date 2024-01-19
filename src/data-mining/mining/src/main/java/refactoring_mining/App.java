@@ -26,7 +26,9 @@ public final class App {
         //                         "https://github.com/square/retrofit.git", 
         //                         "master");
         
-        miner.generateJsonForAllRefactorings(folderPath);
+        // miner.generateJsonForAllRefactorings(folderPath);
+        miner.populateFileContentOnCommits(folderPath);
+
         // miner.fetchRevWalk();
         
         // RepositoryEvaluator evaluator = new RepositoryEvaluator(folderPath);

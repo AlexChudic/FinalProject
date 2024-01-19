@@ -43,6 +43,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -52,6 +54,7 @@ public class Miner {
     private GitHistoryRefactoringMiner miner = new GitHistoryRefactoringMinerImpl();
     private Repository repo;
     private String branch;
+    private RevWalk repoWalk;
 
     /**
 	 * Indicate commits that should be ignored.
@@ -65,9 +68,30 @@ public class Miner {
         try {
             this.branch = branch;
             setRepo(folder, url);
+            this.repoWalk = this.gitService.createAllRevsWalk(repo, branch);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String getParentCommitId(String commitId) {
+        try{
+            RevCommit commit = getCommitById(commitId);
+
+            if (commit != null) {
+                RevCommit[] parents = commit.getParents();
+                return parents[0].getId().getName();
+            } else {
+                return new String() ;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new String();
+        }
+    }
+
+    private RevCommit getCommitById(String commitId) throws IOException {
+        return repoWalk.parseCommit(repo.resolve(commitId));
     }
 
     public void fetchRevWalk(){
@@ -254,6 +278,77 @@ public class Miner {
                     }
                 }
             });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void populateJsonWithFileContent(Path JSONFilePath, String repoFolderPath, Boolean after) {
+        try{
+            String jsonString = new String(Files.readAllBytes(JSONFilePath));
+            JSONObject json = new JSONObject(jsonString);
+            String refString = "beforeRefactoring";
+            if(after){
+                refString = "afterRefactoring";
+            }
+            if (json.has(refString)) {
+                JSONObject refactoringObj = json.getJSONObject(refString);
+        
+                if (refactoringObj.has("filePath")) {
+                    // Get the file content
+                    String filePath = refactoringObj.getString("filePath");
+                    if( Files.exists(Paths.get(repoFolderPath + "/" + filePath)) ){
+                        ArrayList<String> parentFileCode = new ArrayList<String>();
+                        for( String line : Files.readAllLines(Paths.get(repoFolderPath + "/" + filePath))){
+                            parentFileCode.add(line);
+                        }
+                        refactoringObj.put("file", new JSONArray(parentFileCode));
+                    }
+
+                    // Update the json file
+                    json.put(refString, refactoringObj);
+                    try (FileWriter fileWriter = new FileWriter(JSONFilePath.toString())){
+                        fileWriter.write(json.toString());
+            
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("Added " + refString + " file content to json");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
+        
+    }
+
+    public void populateFileContentOnCommits(String repoFolderPath) {
+        String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
+        try {
+            try (Stream<Path> JSONFiles = Files.list(Paths.get(refactoringFolderPath))) {
+                                
+                JSONFiles.forEach(JSONFilePath -> {
+                    String file = JSONFilePath.getFileName().toString();
+                    if(file.substring(file.length()-5).equals(".json")){
+                        String commitId = file.substring(0, 40);
+                        try{ 
+                            // Checkout the commit and populate the json with afterReafactoring file content
+                            gitService.checkout(this.repo, commitId);
+                            populateJsonWithFileContent(JSONFilePath, repoFolderPath, true);
+                            
+                            // Checkout the parent commit and populate the json with beforeReafactoring file content
+                            String parentCommit = getParentCommitId(commitId);
+                            gitService.checkout(this.repo, parentCommit);
+                            populateJsonWithFileContent(JSONFilePath, repoFolderPath, false);
+
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
