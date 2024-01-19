@@ -1,3 +1,4 @@
+import sys
 from openai import OpenAI
 from dotenv import load_dotenv
 import pandas as pd
@@ -14,11 +15,17 @@ def construct_simple_prompt(file, changes_start=None, changes_end=None):
     if changes_end:
         return "Refactor the following class between the lines " + str(changes_start) + " and " + str(changes_end) + ":\n" + file
     else:
+        # Good to show if the LLM can decide on the type of refactoring
+        # Can they maintain the same functionality? and code quality
         return "Refactor the following class:\n" + file
+    
+    # TODO: add prompt which adds the refactoring miner message
     
 
 def ask_chatGPT( prompt ):
     client = OpenAI()
+    print("Asking GPT-3...")
+    print(prompt)
     response = client.chat.completions.create(
         model="gpt-3.5-turbo-1106",
         messages=[
@@ -27,27 +34,52 @@ def ask_chatGPT( prompt ):
         ]
     )
     print(response.choices[0].message.content)
-    time.sleep(20)
+    time.sleep(20) # Wait for 20 seconds to avoid exceeding the API limit
     return response.choices[0].message.content
 
+def JSON_to_dataFrame(JSON_path):
+    if os.path.isfile(JSON_path) and JSON_path[-4:] == "json":
+        with open(JSON_path) as f:
+            data = json.load(f)
 
-def prompt_refactorings(refactorings, directory_path):
-    i = 0
-    for ref in refactorings:
-        if "beforeRefactoring.file" in ref.columns:
-            prompt1 = construct_simple_prompt(join_file(ref["beforeRefactoring.file"][0]))
+        df = pd.json_normalize(data)  # Convert JSON to DataFrame
+        return df
+    else:
+        return None
+
+def get_LLM_refactorings_for_file(JSON_path):
+    refactoring = JSON_to_dataFrame(JSON_path)
+    if refactoring is not None:
+        if "beforeRefactoring.file" in refactoring.columns:
+            prompt1 = construct_simple_prompt(join_file(refactoring["beforeRefactoring.file"][0]))
             LLM_answer = ask_chatGPT(prompt1)
-            ref['LLM_simple_output'] = LLM_answer
+            refactoring['LLMRefactoring.simplePrompt'] = LLM_answer
 
-            if "beforeRefactoring.startLine" in ref.columns and "beforeRefactoring.endLine" in ref.columns:
-                prompt2 = construct_simple_prompt(join_file(ref["beforeRefactoring.file"][0]), ref["beforeRefactoring.startLine"][0], ref["beforeRefactoring.endLine"][0])
+            if "beforeRefactoring.startLine" in refactoring.columns and "beforeRefactoring.endLine" in refactoring.columns:
+                prompt2 = construct_simple_prompt(join_file(refactoring["beforeRefactoring.file"][0]), refactoring["beforeRefactoring.startLine"][0], refactoring["beforeRefactoring.endLine"][0])
                 LLM_answer = ask_chatGPT(prompt2)
-                ref['LLM_simple_output_with_columns'] = LLM_answer
+                refactoring['LLMRefactoring.simplePromptWithColumns'] = LLM_answer
 
-            ref.to_json(f"{directory_path}with-answers/{i}_LLM_results.json", orient='records', lines=True)
-            print(f"DataFrame {i} successfully saved!")
-            i += 1
+            refactoring.to_json(JSON_path, orient='records', lines=True)
+            print(f"DataFrame {JSON_path} successfully saved!")
+    else:
+        print(f"Invalid JSON file: {JSON_path}")
 
+def prompt_directory_refactorings(directory_path):
+    for filename in os.listdir(directory_path):
+        if filename[-4:] == "json":
+            get_LLM_refactorings_for_file(directory_path + "/" + filename)
+
+def handle_terminal_input(**args):
+    load_dotenv()
+    JSON_path = None
+    if len(sys.argv) > 1:
+        JSON_path = sys.argv[1]
+        print(f"Parameter passed: {JSON_path}")
+    else:
+        print("No parameter provided.")
 
 if __name__ == "__main__":
     load_dotenv()
+    prompt_directory_refactorings("refactoring-data/refactoring-toy-example")
+    
