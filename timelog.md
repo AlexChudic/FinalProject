@@ -245,3 +245,8 @@
 ### 18 Jan 2024
 * *6 hours* Add function that loops through refactorings and populate the JSONs with file contents
 
+### 19 Jan 2024
+* *4 hours* Add new functions to the python script for running ChatGPT & Implement Helper function that makes the python script runnable from Java
+* *0.5 hours* Supervisor meeting
+* *1 hour* Summarising the meeting, uploading the meeting minutes for past meetings and update the time log
+
