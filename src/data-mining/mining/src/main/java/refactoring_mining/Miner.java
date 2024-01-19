@@ -172,10 +172,7 @@ public class Miner {
             parentFile.put("endLine", String.valueOf(parentCodeRange.getEndLine()));
             parentFile.put("filePath", parentCodeRange.getFilePath());
             
-            // System.out.println( folderPath + "/" + parentCodeRange.getFilePath() );
-            // try ( Stream<Path> files = Files.list(Paths.get(folderPath+"/src"))) {
-            //     files.forEach(System.out::println);
-            // }
+            // this is redundant, as the right commit is not checked out
             if( Files.exists(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
                 ArrayList<String> parentFileCode = new ArrayList<String>();
                 for( String line : Files.readAllLines(Paths.get(folderPath + "/" + parentCodeRange.getFilePath()))){
@@ -187,6 +184,8 @@ public class Miner {
             newFile.put("startLine", String.valueOf(newCodeRange.getStartLine()));
             newFile.put("endLine", String.valueOf(newCodeRange.getEndLine()));
             newFile.put("filePath", newCodeRange.getFilePath());
+            
+            // this is redundant, as the right commit is not checked out
             if ( Files.exists(Paths.get(folderPath + "/" + newCodeRange.getFilePath())) ){
                 ArrayList<String> newFileCode = new ArrayList<String>();
                 for( String line : Files.readAllLines(Paths.get(folderPath + "/" + newCodeRange.getFilePath()))){
