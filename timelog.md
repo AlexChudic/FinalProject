@@ -226,4 +226,22 @@
 * *0.5 hours* Writing down timelog for the holidays
 
 ## Week 17
-  
+### 14 Jan 2024
+* *1,5  hour* Create bash file that runs the sonarqube evaluation and the java class that executes it
+
+### 15 Jan 2024
+* *2 hours* Trying to figure out path error
+
+### 16 Jan 2024
+* *1 hour* Figuring out the path error
+* *1 hour* Looking into RefactoringMiner documentation for looping through Repo commits
+* *1 hour* Rewriting the askChatGPT jupyter notebook into a python script
+
+### 17 Jan 2024
+* *1 hour* Looking at RevWalk
+* *0.5 hours* Searching for new LLM refactoring papers
+* *1 hours* Check if the file content in JSON matches the file content in the given commit
+
+### 18 Jan 2024
+* *6 hours* Add function that loops through refactorings and populate the JSONs with file contents
+
