@@ -89,3 +89,52 @@
       * Research SonarCube
    3. Create a set of tutorials from git with answers
       * Better than looking at high-scale projects, as they can easily fit into the LLM context limit
+
+## Meeting 7 - 24.11.2023
+- When evaluating the refactorings, do not try to get one value, rather look at different metrics in which the LLM performs better
+    - Make a table
+- Two ways in which I can look at the refactorings:
+    1. Give LLM only the lines of code where the refactoring has been performed
+    2. Give LLM the whole file where the refactoring has been performed, and analyse the overlap between the two
+
+###  Next steps
+  1. Use the refactoring miner on the Tutorial project (one provided in refactoring miner)
+  2. Find the exact file and lines where the refactoring is performed - possibly try using the LLM to try and figure out what needs to be refactored
+     -  **RQ1: Can LLM detect what type of refactoring needs to be done on the code**
+        - Input: lines of code where the refactoring is performed
+        - Question: What type of refactoring needs to be done on the given code?
+            - Try applying some prompt engineering patterns
+        - Ground Truth?: the refactoring done by the Refactoring miner
+        - Compare the result to what type has the Refactoring miner detected
+            - Careful, RM might not be correct
+  3. Ask the LLM to perform the refactoring itself
+     - **RQ2: How good LLMs are in code refactoring compared to humans (with or without tools)?**
+        - Input: lines of code where the refactoring is performed
+        - Question: Refactor the following code…
+            - TODO Look at formulating the prompt later
+        - Ground Truth??: The refactoring done by the developer
+        - Compare the refactorings - important to consider the developer refactoring might be done suboptimally (or more refactoring is needed)
+  4. Make an evaluation matrix for the important metrics
+
+## Meeting 8 - 22.12.2023
+- We talked about the progress on the evaluation pipeline
+- Should focus on finishing the pipeline so I can evaluate the results and establish an understanding
+- Received some interesting resources I should look at
+
+## Meeting 9 - 19.1.2023
+- Talked about the progress in the pipeline - all parts pretty much finished, just trying to link them together
+    - Problem with ChatGPT -> should try Llama hosted by the university
+- Evaluation will be looking at the differences between the
+    - LLM refactoring eval - Previous eval
+    - Developer refactoring eval - Previous eval
+- Look at other prompt engineering papers, guidelines and ideas
+    - RQ2: Does prompt engineering lead to better results?
+- Important Detailed README file to be able to replicate what I did
+- Brief description of the code is enough (some diagram might be nice)
+
+###  Next steps
+  1. Complete the pipeline
+     - Make ChatGPT work and/or try using the Llama model hosted by the university
+     - Look at the evaluation metrics for the simple prompts
+  3. Look at papers about prompt engineering and test other prompt designs
+  4. Start writing down some ideas for the dissertation
