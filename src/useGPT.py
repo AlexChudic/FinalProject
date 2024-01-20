@@ -51,6 +51,7 @@ def get_LLM_refactorings_for_file(JSON_path):
         if "beforeRefactoring" in refactoring and "file" in refactoring["beforeRefactoring"]:
             prompt1 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]))
             LLM_answer = ask_chatGPT(prompt1)
+            refactoring['LLMRefactoring'] = {}
             refactoring['LLMRefactoring']['simplePrompt'] = LLM_answer
 
             if "startLine" in refactoring["beforeRefactoring"] and "endLine" in refactoring["beforeRefactoring"]:

@@ -19,10 +19,11 @@ public class HelperTools {
     }
 
     public static void getLLMRefactoring(String JSONPath){
-        // String[] command = {"python3", "src/useGPT.py", JSONPath};
-        String[] command = {"/runModel/python", "src/useGPT.py", JSONPath}; // TODO: make this work
+        String[] command = {"runModel/bin/python", "src/useGPT.py", JSONPath};
         try {
-            Process process = Runtime.getRuntime().exec(command);
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
             int exitCode = process.waitFor();
                     
             if (exitCode != 0) {
