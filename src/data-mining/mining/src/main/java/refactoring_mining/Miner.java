@@ -184,7 +184,7 @@ public class Miner {
             newFile.put("startLine", String.valueOf(newCodeRange.getStartLine()));
             newFile.put("endLine", String.valueOf(newCodeRange.getEndLine()));
             newFile.put("filePath", newCodeRange.getFilePath());
-            
+
             // this is redundant, as the right commit is not checked out
             if ( Files.exists(Paths.get(folderPath + "/" + newCodeRange.getFilePath())) ){
                 ArrayList<String> newFileCode = new ArrayList<String>();
@@ -328,7 +328,7 @@ public class Miner {
                                 
                 JSONFiles.forEach(JSONFilePath -> {
                     String file = JSONFilePath.getFileName().toString();
-                    if(file.substring(file.length()-5).equals(".json")){
+                    if(file.length() > 5 && file.substring(file.length()-5).equals(".json")){
                         String commitId = file.substring(0, 40);
                         try{ 
                             // Checkout the commit and populate the json with afterReafactoring file content
@@ -340,7 +340,7 @@ public class Miner {
                             gitService.checkout(this.repo, parentCommit);
                             populateJsonWithFileContent(JSONFilePath, repoFolderPath, false);
 
-
+                            HelperTools.getLLMRefactoring(JSONFilePath.toString());
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
