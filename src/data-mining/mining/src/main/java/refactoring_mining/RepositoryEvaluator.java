@@ -10,21 +10,26 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Base64;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class RepositoryEvaluator {
     private String repositoryPath;
     private String sonarToken;
+    private String sonarUser;
+    private String sonarPassword;
 
     public RepositoryEvaluator(String repositoryPath) {
         this.repositoryPath = repositoryPath;
         String pathToEnvFile = "/Users/alexc/Desktop/UofG/Final_Project/FinalProject/src/.env";
         Dotenv dotenv = Dotenv.configure().directory(pathToEnvFile).load();
-        this.sonarToken = dotenv.get("SONAR_TOKEN");;
+        this.sonarToken = dotenv.get("SONAR_TOKEN");
+        this.sonarUser = dotenv.get("SONAR_USER");
+        this.sonarPassword = dotenv.get("SONAR_PASSWORD");
     }
 
-    public void evaluateRepository() {
+    public String evaluateRepository() {
         try {
             // Run the Bash script
             runBashScript();
@@ -35,8 +40,10 @@ public class RepositoryEvaluator {
 
             // Print the result
             System.out.println("SonarQube Result:\n" + sonarQubeResult);
+            return sonarQubeResult;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
+            return null;
         }
     }
 
@@ -61,19 +68,20 @@ public class RepositoryEvaluator {
         }
     }
 
-    private String makeGetRequest(String strUrl) throws IOException {
+    public String makeGetRequest(String strUrl) {
         try {
             URI uri = new URI(strUrl);
-            URL url = uri.toURL(); // TODO: Handle MalformedURLException
+            URL url = uri.toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            // Set the request method to GET
+            // Set the request method and headers
+            String credentials = sonarUser + ":" + sonarPassword;
+            String basicAuth = "Basic " + new String(Base64.getEncoder().encode(credentials.getBytes()));
+            connection.setRequestProperty("Authorization", basicAuth);          
             connection.setRequestMethod("GET");
 
-            // Set SonarQube token header
-            connection.setRequestProperty("Authorization", "Bearer " + sonarToken);
-
             // Get the response
+            connection.getResponseCode();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
                 StringBuilder response = new StringBuilder();
                 String line;
@@ -81,11 +89,17 @@ public class RepositoryEvaluator {
                     response.append(line);
                 }
                 return response.toString();
-            } finally {
-                connection.disconnect();
             }
-        } catch (URISyntaxException e) {
-            throw new IOException("Malformed URL: " + strUrl, e);
+            
+        } catch (URISyntaxException | IOException e) {
+            System.out.println("Error making GET request: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
     }
+
+    // LLM refactoring evaluation - previous eval
+
+    // Developer refactoring eval - previous eval
+
 }
