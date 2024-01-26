@@ -2,6 +2,7 @@ package refactoring_mining;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -10,7 +11,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Base64;
+
+import org.json.JSONObject;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -19,6 +24,7 @@ public class RepositoryEvaluator {
     private String sonarToken;
     private String sonarUser;
     private String sonarPassword;
+    private String sonarProjectName;
 
     public RepositoryEvaluator(String repositoryPath) {
         this.repositoryPath = repositoryPath;
@@ -27,6 +33,7 @@ public class RepositoryEvaluator {
         this.sonarToken = dotenv.get("SONAR_TOKEN");
         this.sonarUser = dotenv.get("SONAR_USER");
         this.sonarPassword = dotenv.get("SONAR_PASSWORD");
+        this.sonarProjectName = dotenv.get("SONAR_PROJECT_NAME");
     }
 
     public String evaluateRepository() {
@@ -35,7 +42,7 @@ public class RepositoryEvaluator {
             runBashScript();
 
             // Make a GET request to SonarQube server
-            String sonarQubeUrl = "http://localhost:9000/api/qualitygates/project_status?projectKey=RefactorAssessment";
+            String sonarQubeUrl = "http://localhost:9000/api/measures/component?component=" + sonarProjectName + "&metricKeys=code_smells%2Cnew_code_smells%2Clines%2Cnew_lines%2Cbugs%2Cnew_bugs%2Cvulnerabilities%2Cnew_vulnerabilities%2Cnew_maintainability_rating%2Csqale_index%2Ccomplexity%2Ccognitive_complexity%2Ccomment_lines";
             String sonarQubeResult = makeGetRequest(sonarQubeUrl);
 
             // Print the result
@@ -98,8 +105,37 @@ public class RepositoryEvaluator {
         }
     }
 
-    // LLM refactoring evaluation - previous eval
+    // LLM refactoring evaluation - baseline eval
+    // Developer refactoring eval - baseline eval
+    public void processEvaluationResults(String baseline, String LLM, String developer, String JSONFilePath){
+        JSONObject baslineJson = new JSONObject(baseline);
+        JSONObject LLMJson = new JSONObject(LLM);
+        JSONObject developerJson = new JSONObject(developer);
 
-    // Developer refactoring eval - previous eval
+        try {
+            // Save the eval values into the json
+            String jsonString = new String(Files.readAllBytes(Paths.get(JSONFilePath)));
+            JSONObject json = new JSONObject(jsonString);
+            JSONObject evaluation = new JSONObject();
+            evaluation.put("baseline", baslineJson);
+            evaluation.put("LLM", LLMJson);
+            evaluation.put("developer", developerJson);
+            json.put("evaluation", evaluation);
+
+            try (FileWriter fileWriter = new FileWriter(JSONFilePath)){
+                fileWriter.write(json.toString());
+                System.out.println("Successfully updated the JSON file with evaluation data.");
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        
+    }
+
+    
 
 }

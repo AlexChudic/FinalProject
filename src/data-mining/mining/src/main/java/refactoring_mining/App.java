@@ -27,11 +27,12 @@ public final class App {
         //                         "master");
         
         // miner.generateJsonForAllRefactorings(folderPath);
-        miner.populateFileContentOnCommits(folderPath);
-
-        // miner.fetchRevWalk();
+        // miner.populateFileContentOnCommits(folderPath);
+        
+        miner.evaluateSingleFileRefactorings(folderPath);
         
         // RepositoryEvaluator evaluator = new RepositoryEvaluator(folderPath);
         // evaluator.evaluateRepository();
+
     }
 }

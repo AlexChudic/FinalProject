@@ -353,6 +353,52 @@ public class Miner {
         }
     }
 
+    public void evaluateSingleFileRefactorings(String repoFolderPath){
+        String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
+        RepositoryEvaluator evaluator = new RepositoryEvaluator(repoFolderPath);
+        try {
+            try (Stream<Path> JSONFiles = Files.list(Paths.get(refactoringFolderPath))) {
+                                
+                JSONFiles.forEach(JSONFilePath -> {
+                    String file = JSONFilePath.getFileName().toString();
+                    if(file.length() > 5 && file.substring(file.length()-5).equals(".json") && 
+                        HelperTools.isSingleFileRefactoring(JSONFilePath.toString())){
+
+                        String changedFilePath = HelperTools.getChangedFilePath(JSONFilePath.toString());
+                        String LLMRefactoring = HelperTools.preprocessLLMRefactoring(HelperTools.getFileFromJSON(JSONFilePath.toString(), "LLM_simple"));
+                        String beforeRefactoring = HelperTools.getFileFromJSON(JSONFilePath.toString(), "before");
+                        String afterRefactoring = HelperTools.getFileFromJSON(JSONFilePath.toString(), "after");
+                        if( changedFilePath != null || LLMRefactoring != null || beforeRefactoring != null || afterRefactoring != null){
+                            String commitId = file.substring(0, 40);
+                            try{ 
+                                // Checkout the parent commit and perform the evaluation
+                                String parentCommit = getParentCommitId(commitId);
+                                HelperTools.checkout(this.repo, this.branch, parentCommit);
+                                
+                                String baseline = evaluator.evaluateRepository();
+                                HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, LLMRefactoring);
+                                String LLM = evaluator.evaluateRepository();
+                                HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, afterRefactoring);
+                                String developer = evaluator.evaluateRepository();
+                                HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, beforeRefactoring);
+
+                                if(baseline != null || LLM != null || developer != null){
+                                    evaluator.processEvaluationResults(baseline, LLM, developer, JSONFilePath.toString());
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    
+                    }
+                });
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setRepo(String folder, String url) {
         try {
             this.repo = gitService.cloneIfNotExists(folder, url);
