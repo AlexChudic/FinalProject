@@ -138,3 +138,19 @@
      - Look at the evaluation metrics for the simple prompts
   3. Look at papers about prompt engineering and test other prompt designs
   4. Start writing down some ideas for the dissertation
+
+## Meeting 10 - 26.1.2023
+- Talked about the progress in the pipeline
+    - Made ChatGPT Work
+    - Worked on automatic evaluation
+- First continue with the simple experiment - only on single file refactorings, will try multiple file refactorings later
+    - Make sure to get 
+    - Langchain might be useful for the multiple file refactoring 
+
+###  Next steps
+  1. Complete the experiment only considering the refactoring that is in a single file (i.e., cases where there is only a single refactoring in that file)
+     - In that case, you will first ask LLM to refactor the code , because we want to answer the following RQ: Can LLMs detect the type of refactoring they must do?
+     - In the second experiment you can give the "description" of the Refactoring miner as the prompt.
+  2. Try to play with Langchain, and see if you can use it for refactoring that affects multiple files.
+  3. Try collecting the dataset to use for evaluation afterward
+     - Perform the whole single-file experiment on some of them
