@@ -375,11 +375,11 @@ public class Miner {
                                 String parentCommit = getParentCommitId(commitId);
                                 HelperTools.checkout(this.repo, this.branch, parentCommit);
                                 
-                                String baseline = evaluator.evaluateRepository();
+                                String baseline = evaluator.evaluateFile(changedFilePath);
                                 HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, LLMRefactoring);
-                                String LLM = evaluator.evaluateRepository();
+                                String LLM = evaluator.evaluateFile(changedFilePath);
                                 HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, afterRefactoring);
-                                String developer = evaluator.evaluateRepository();
+                                String developer = evaluator.evaluateFile(changedFilePath);
                                 HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, beforeRefactoring);
 
                                 if(baseline != null || LLM != null || developer != null){
@@ -405,6 +405,9 @@ public class Miner {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+    }
+
+    public Repository getRepo() {
+        return this.repo;
     }
 }

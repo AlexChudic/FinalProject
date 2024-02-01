@@ -14,6 +14,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 
@@ -25,6 +26,7 @@ public class RepositoryEvaluator {
     private String sonarUser;
     private String sonarPassword;
     private String sonarProjectName;
+    private String basicAuth;
 
     public RepositoryEvaluator(String repositoryPath) {
         this.repositoryPath = repositoryPath;
@@ -34,44 +36,89 @@ public class RepositoryEvaluator {
         this.sonarUser = dotenv.get("SONAR_USER");
         this.sonarPassword = dotenv.get("SONAR_PASSWORD");
         this.sonarProjectName = dotenv.get("SONAR_PROJECT_NAME");
+        String credentials = sonarUser + ":" + sonarPassword;
+        this.basicAuth = "Basic " + new String(Base64.getEncoder().encode(credentials.getBytes()));
     }
 
     public String evaluateRepository() {
-        try {
-            // Run the Bash script
-            runBashScript();
+        // Run the Bash script
+        String analysisUrl = runBashScript();
 
-            // Make a GET request to SonarQube server
-            String sonarQubeUrl = "http://localhost:9000/api/measures/component?component=" + sonarProjectName + "&metricKeys=code_smells%2Cnew_code_smells%2Clines%2Cnew_lines%2Cbugs%2Cnew_bugs%2Cvulnerabilities%2Cnew_vulnerabilities%2Cnew_maintainability_rating%2Csqale_index%2Ccomplexity%2Ccognitive_complexity%2Ccomment_lines";
-            String sonarQubeResult = makeGetRequest(sonarQubeUrl);
+        // Make a GET request to SonarQube server
+        String sonarQubeUrl = "http://localhost:9000/api/measures/component?component=" + sonarProjectName + "&metricKeys=code_smells%2Cnew_code_smells%2Clines%2Cnew_lines%2Cncloc%2Cbugs%2Cnew_bugs%2Cvulnerabilities%2Cnew_vulnerabilities%2Cnew_maintainability_rating%2Csqale_index%2Ccomplexity%2Ccognitive_complexity%2Ccomment_lines";
+        String sonarQubeResult = makeGetRequest(sonarQubeUrl);
 
-            // Print the result
-            System.out.println("SonarQube Result:\n" + sonarQubeResult);
-            return sonarQubeResult;
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            return null;
-        }
+        // Print the result
+        System.out.println("SonarQube Result:\n" + sonarQubeResult);
+        return sonarQubeResult;
     }
 
-    private void runBashScript() throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", "tmp/evaluate-repository.sh " + repositoryPath + " " + sonarToken);
-        processBuilder.redirectErrorStream(true);
+    public String evaluateFile(String filePath) {
+        // Run the Bash script
+        String analysisUrl = runBashScript();
 
-        Process process = processBuilder.start();
-        int exitCode = process.waitFor();
+        // Wait for the analysis to finish
+        waitForTaskToFinish(analysisUrl);
+        
+        // Make a GET request to SonarQube server
+        String fileUrl = "%3A" + filePath.replace("/", "%2F");
+        String sonarQubeUrl = "http://localhost:9000/api/measures/component?component=" + sonarProjectName + fileUrl + "&metricKeys=code_smells%2Cnew_code_smells%2Clines%2Cnew_lines%2Cncloc%2Cbugs%2Cnew_bugs%2Cvulnerabilities%2Cnew_vulnerabilities%2Cnew_maintainability_rating%2Csqale_index%2Ccomplexity%2Ccognitive_complexity%2Ccomment_lines";
+        String sonarQubeResult = makeGetRequest(sonarQubeUrl);
 
-        try (InputStream inputStream = process.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+        // Print the result
+        System.out.println("SonarQube Result:\n" + sonarQubeResult);
+        return sonarQubeResult;
+        
+    }
+
+    private void waitForTaskToFinish(String analysisUrl){
+        String analysisTaskDetails = makeGetRequest(analysisUrl);
+        JSONObject analysisTaskDetailsJson = new JSONObject(analysisTaskDetails);
+        String analysisState = analysisTaskDetailsJson.getJSONObject("task").getString("status");
+        while(analysisState.equals("PENDING") || analysisState.equals("IN_PROGRESS")){
+            System.out.println("Waiting; Analysis State: " + analysisState);
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            analysisTaskDetails = makeGetRequest(analysisUrl);
+            analysisTaskDetailsJson = new JSONObject(analysisTaskDetails);
+            analysisState = analysisTaskDetailsJson.getJSONObject("task").getString("status");
         }
+        System.out.println("Analysis State: " + analysisState);
+    }
 
-        // Check the exit code
-        if (exitCode != 0) {
-            throw new RuntimeException("Bash script execution failed with exit code: " + exitCode);
+    public String runBashScript(){
+        try { 
+            ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", "tmp/evaluate-repository.sh " + repositoryPath + " " + sonarToken);
+            processBuilder.redirectErrorStream(true);
+
+            Process process = processBuilder.start();
+            int exitCode = process.waitFor();
+
+            String analysisUrl = ""; // get the analysis url from the bash script
+            try (InputStream inputStream = process.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if( line.contains("ANALYSIS_URL") ){
+                        analysisUrl = line.substring(14);
+                    }
+                    System.out.println(line);
+                }
+            }
+
+            // Check the exit code
+            if (exitCode != 0) {
+                throw new RuntimeException("Bash script execution failed with exit code: " + exitCode);
+            } else {
+                System.out.println("Bash script executed successfully");
+                return analysisUrl;
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return "";
         }
     }
 
@@ -82,8 +129,6 @@ public class RepositoryEvaluator {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             // Set the request method and headers
-            String credentials = sonarUser + ":" + sonarPassword;
-            String basicAuth = "Basic " + new String(Base64.getEncoder().encode(credentials.getBytes()));
             connection.setRequestProperty("Authorization", basicAuth);          
             connection.setRequestMethod("GET");
 
@@ -132,10 +177,5 @@ public class RepositoryEvaluator {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        
     }
-
-    
-
 }
