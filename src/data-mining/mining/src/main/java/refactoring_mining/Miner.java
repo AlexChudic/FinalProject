@@ -24,15 +24,21 @@ import gr.uom.java.xmi.decomposition.AbstractCodeMapping;
 import gr.uom.java.xmi.decomposition.CompositeStatementObject;
 import gr.uom.java.xmi.decomposition.StatementObject;
 import gr.uom.java.xmi.decomposition.UMLOperationBodyMapper;
+import gr.uom.java.xmi.diff.AddClassAnnotationRefactoring;
 import gr.uom.java.xmi.diff.AddParameterRefactoring;
+import gr.uom.java.xmi.diff.ChangeClassAccessModifierRefactoring;
+import gr.uom.java.xmi.diff.ChangeOperationAccessModifierRefactoring;
 import gr.uom.java.xmi.diff.ChangeVariableTypeRefactoring;
 import gr.uom.java.xmi.diff.CodeRange;
+import gr.uom.java.xmi.diff.ExtractAttributeRefactoring;
 import gr.uom.java.xmi.diff.ExtractOperationRefactoring;
 import gr.uom.java.xmi.diff.InlineOperationRefactoring;
 import gr.uom.java.xmi.diff.MoveAttributeRefactoring;
+import gr.uom.java.xmi.diff.MoveClassRefactoring;
 import gr.uom.java.xmi.diff.MoveOperationRefactoring;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.RenameOperationRefactoring;
+import gr.uom.java.xmi.diff.RenameVariableRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
 
 import org.json.JSONArray;
@@ -94,70 +100,6 @@ public class Miner {
         return repoWalk.parseCommit(repo.resolve(commitId));
     }
 
-    public void fetchRevWalk(){
-        try {
-            RevWalk walk = gitService.createAllRevsWalk(this.repo, this.branch);
-            Iterator<RevCommit> it = walk.iterator();
-            while(it.hasNext()){
-                RevCommit currentCommit = it.next();
-                Set<String> filePathsBefore = new LinkedHashSet<String>();
-                Set<String> filePathsCurrent = new LinkedHashSet<String>();
-                                Map<String, String> renamedFilesHint = new HashMap<String, String>();
-                gitService.fileTreeDiff(this.repo, currentCommit, filePathsBefore, filePathsCurrent, renamedFilesHint);
-                
-                Set<String> repositoryDirectoriesBefore = new LinkedHashSet<String>();
-                Set<String> repositoryDirectoriesCurrent = new LinkedHashSet<String>();
-                Map<String, String> fileContentsBefore = new LinkedHashMap<String, String>();
-                Map<String, String> fileContentsCurrent = new LinkedHashMap<String, String>();
-                
-                if (!filePathsBefore.isEmpty() && !filePathsCurrent.isEmpty() && currentCommit.getParentCount() > 0) {
-                    RevCommit parentCommit = currentCommit.getParent(0);
-                    GitHistoryRefactoringMinerImpl.populateFileContents(this.repo, parentCommit, filePathsBefore, fileContentsBefore, repositoryDirectoriesBefore);
-                    GitHistoryRefactoringMinerImpl.populateFileContents(this.repo, currentCommit, filePathsCurrent, fileContentsCurrent, repositoryDirectoriesCurrent);
-                    List<MoveSourceFolderRefactoring> moveSourceFolderRefactorings = GitHistoryRefactoringMinerImpl.processIdenticalFiles(fileContentsBefore, fileContentsCurrent, renamedFilesHint, false); 
-                    UMLModel parentUMLModel = GitHistoryRefactoringMinerImpl.createModel(fileContentsBefore, repositoryDirectoriesBefore);
-                    UMLModel currentUMLModel = GitHistoryRefactoringMinerImpl.createModel(fileContentsCurrent, repositoryDirectoriesCurrent);
-                    //UMLModelDiff modelDiff = parentUMLModel.diff(currentUMLModel);
-
-				
-                }
-                //System.out.println(commit.getFullMessage());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-    }
-
-    // TESTING other refactoring miner functionality
-    private void getRefactoringLines(Refactoring ref){
-        if(ref instanceof ExtractOperationRefactoring) { //TODO do this for all refactoring types
-            ExtractOperationRefactoring ex = (ExtractOperationRefactoring) ref;
-            UMLOperationBodyMapper bodyMapper = ex.getBodyMapper();
-            UMLOperationBodyMapper parentMapper = bodyMapper.getParentMapper();
-            Set<AbstractCodeMapping> mappings = bodyMapper.getMappings();
-            Set<AbstractCodeFragment> codeFragment = ex.getExtractedCodeFragmentsFromSourceOperation();
-            Set<AbstractCodeFragment> codeFragment2 = ex.getExtractedCodeFragmentsToExtractedOperation();
-
-            System.out.println( "BEFORE" );
-            CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
-            System.out.println( newCodeRange.toString() );
-            for (AbstractCodeFragment abstractCodeFragment : codeFragment2) {
-                System.out.println( abstractCodeFragment.getParent() );
-                System.out.println( abstractCodeFragment.getArgumentizedString() );
-            }
-
-            System.out.println( "AFTER" );
-            CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeExtraction();
-            System.out.println( parentCodeRange.toString() );
-
-            for (AbstractCodeFragment abstractCodeFragment : codeFragment) {
-                System.out.println( abstractCodeFragment.getArgumentizedString() );
-            }
-            
-        }
-    }
-
     private JSONObject createJSONForRefactoring(Refactoring ref, String refId, CodeRange parentCodeRange, CodeRange newCodeRange, String folderPath){
         JSONObject json = new JSONObject();
         json.put("refactoringType", ref.getRefactoringType().toString());
@@ -209,7 +151,15 @@ public class Miner {
             CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
 
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        } 
+        }
+        else if(ref instanceof ExtractAttributeRefactoring) { 
+            ExtractAttributeRefactoring ex = (ExtractAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
         else if(ref instanceof InlineOperationRefactoring) { 
             InlineOperationRefactoring ex = (InlineOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getTargetOperationCodeRangeBeforeInline();
@@ -222,6 +172,15 @@ public class Miner {
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeRename();
             CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterRename();
 
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
+        else if(ref instanceof RenameVariableRefactoring) { 
+            RenameVariableRefactoring ex = (RenameVariableRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            // TODO try using getInvolvedClassesBeforeRefactoring & getInvolvedClassesAfterRefactoring functions
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
         else if(ref instanceof MoveOperationRefactoring) { 
@@ -238,8 +197,48 @@ public class Miner {
 
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
-        if( ref instanceof AddParameterRefactoring){
+        else if( ref instanceof MoveClassRefactoring){
+            MoveClassRefactoring ex = (MoveClassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
+        else if( ref instanceof ChangeVariableTypeRefactoring){
+            ChangeVariableTypeRefactoring ex = (ChangeVariableTypeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
+        else if( ref instanceof AddParameterRefactoring){
             AddParameterRefactoring ex = (AddParameterRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
+        else if( ref instanceof ChangeClassAccessModifierRefactoring){
+            ChangeClassAccessModifierRefactoring ex = (ChangeClassAccessModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
+        else if( ref instanceof ChangeOperationAccessModifierRefactoring){
+            ChangeOperationAccessModifierRefactoring ex = (ChangeOperationAccessModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        }
+        else if( ref instanceof AddClassAnnotationRefactoring){
+            AddClassAnnotationRefactoring ex = (AddClassAnnotationRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
@@ -252,6 +251,15 @@ public class Miner {
 
     private void buildPromptContext(Refactoring ref, String refId, String folderPath){
         JSONObject json = getRefactoringData(ref, refId, folderPath);
+        String folder = "refactoring-data/" + folderPath.substring(4);
+        if( !Files.exists(Paths.get(folder))){
+            try {
+                Files.createDirectories(Paths.get(folder));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         String filePath = "refactoring-data/" + folderPath.substring(4) + "/" + refId + ".json";
 
         try (FileWriter fileWriter = new FileWriter(filePath)){
@@ -321,7 +329,7 @@ public class Miner {
         
     }
 
-    public void populateFileContentOnCommits(String repoFolderPath) {
+    public void populateFileContentOnCommitsAndGetLLMRefactorings(String repoFolderPath) {
         String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
         try {
             try (Stream<Path> JSONFiles = Files.list(Paths.get(refactoringFolderPath))) {
@@ -340,7 +348,10 @@ public class Miner {
                             gitService.checkout(this.repo, parentCommit);
                             populateJsonWithFileContent(JSONFilePath, repoFolderPath, false);
 
-                            HelperTools.getLLMRefactoring(JSONFilePath.toString());
+                            // Only get the LLM Refactoring for the Single file refactorings
+                            if (HelperTools.isSingleFileRefactoring(JSONFilePath.toString())){ 
+                                HelperTools.getLLMRefactoring(JSONFilePath.toString());
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
