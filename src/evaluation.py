@@ -1,11 +1,14 @@
 import os
 import json
 import sys
+import matplotlib.pyplot as plt
 from tabulate import tabulate
 from dotenv import load_dotenv
+from matplotlib.table import Table
+import numpy as np
 
 
-def evaluateCommit( jsonPath, generateLog=False ):
+def evaluateCommit( jsonPath, generateLog=False, generateChart=False ):
     with open(jsonPath) as f:
         data = json.load(f)
     
@@ -25,15 +28,52 @@ def evaluateCommit( jsonPath, generateLog=False ):
     table = []
     for metric in developer_refactoring:
         table.append([metric, developer_refactoring[metric], LLM_refactoring[metric]])
-    
     table.sort(key=lambda x: x[0])
+
+    evalPath = logPath = os.path.dirname(jsonPath) + "/eval/" + os.path.basename(jsonPath)[:-5]
+    if generateChart:
+        generateBarChart(table, savePath=evalPath + "-barChart.png")
+
     if generateLog:
         # Write the data to a log file
-        logPath = os.path.dirname(jsonPath) + "/eval/" + os.path.basename(jsonPath)[:-5] + "-eval.txt"
-        with open(logPath, "w") as log_file:
-            log_file.write(tabulate(table, headers=headers, tablefmt="grid"))
-            log_file.write("\n\n")
+        logPath = evalPath + "-eval.txt"
+        generateEvalLog(table, logPath, True, data)
+        
+    else:
+        print(tabulate(table, headers=headers, tablefmt="grid"))
+    
+    return table
+    
+def evaluateRepository( repositoryPath ):
+    aggregate_table = []
+    table_count = 0
+    for filename in os.listdir(repositoryPath):
+        if filename[-4:] == "json":
+            if hasEvaluationMetrics(repositoryPath + "/" + filename):
+                singleRefactoringMetrics = evaluateCommit(repositoryPath + "/" + filename, True, True)
+                aggregate_table = addToTable(aggregate_table, singleRefactoringMetrics)
+                table_count += 1
+    headers = ["Metric", "Developer Refactoring", "LLM Refactoring"]
+    average_table = [[item[0], item[1]/table_count, item[2]/table_count] for item in aggregate_table]
+    generateEvalLog(average_table, repositoryPath + "/eval/average-eval.txt")
+    generateBarChart(average_table, savePath=repositoryPath + "/eval/average-barChart.png")
+    print(tabulate(average_table, headers=headers, tablefmt="grid"))
 
+def addToTable(table, singleRefactoringMetrics):
+    if len(table) == 0:
+        table = singleRefactoringMetrics
+    else:
+        for i in range(len(table)):
+            table[i][1] += singleRefactoringMetrics[i][1]
+            table[i][2] += singleRefactoringMetrics[i][2]
+    return table 
+
+def generateEvalLog(table, logPath, saveRefactorings=False, data=None):
+    with open(logPath, "w") as log_file:
+        log_file.write(tabulate(table, headers=["Metric", "Developer Refactoring", "LLM Refactoring"], tablefmt="grid"))
+        log_file.write("\n\n")
+
+        if saveRefactorings:
             log_file.write("CODE BEFORE REFACTORING:\n")
             log_file.write("\n".join(data["beforeRefactoring"]["file"]))
             log_file.write("\n\n")
@@ -45,17 +85,33 @@ def evaluateCommit( jsonPath, generateLog=False ):
             log_file.write("CODE AFTER LLM REFACTORING:\n")
             ref = data["LLMRefactoring"]["simplePrompt"]
             log_file.write(ref[8: len(ref)-3])
-        print("Evaluation results have been written to:", logPath)
+    print("Evaluation results have been written to:", logPath)
+
+def generateBarChart(data, savePath=None):
+    metrics = [item[0] for item in data]
+    values1 = [item[1] for item in data]
+    values2 = [item[2] for item in data]
+
+    x = range(len(metrics))
+    width = 0.35
+
+    fig, ax = plt.subplots()
+    bar1 = ax.bar(x, values1, width, label='LLM Refactoring')
+    bar2 = ax.bar([i + width for i in x], values2, width, label='Developer Refactoring')
+
+    # Add labels, title, and legend
+    ax.set_ylabel('Values')
+    ax.set_title('Metrics Comparison')
+    ax.set_xticks([i + width / 2 for i in x])
+    ax.set_xticklabels(metrics, rotation=45, ha='right')
+    ax.legend()
+
+    plt.tight_layout()
+    if savePath:
+        plt.savefig(savePath)
+        print("Bar chart has been saved to:", savePath)
     else:
-        print(tabulate(table, headers=headers, tablefmt="grid"))
-    
-
-def evaluateRepository( repositoryPath ):
-    for filename in os.listdir(repositoryPath):
-        if filename[-4:] == "json":
-            if hasEvaluationMetrics(repositoryPath + "/" + filename):
-                evaluateCommit(repositoryPath + "/" + filename, True)
-
+        plt.show()
 
 def hasEvaluationMetrics(jsonPath):
     with open(jsonPath) as f:
@@ -69,4 +125,4 @@ if __name__ == "__main__":
         JSON_path = sys.argv[1]
         evaluateRepository(JSON_path)
     else:
-        evaluateCommit("refactoring-data/refactoring-toy-example/f35b2c8eb8c320f173237e44d04eefb4634649a2-0.json", True)
+        evaluateCommit("refactoring-data/refactoring-toy-example/a5a7f852e45c7cadc8d1524bd4d14a1e39785aa5-0.json", True, True)
