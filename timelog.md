@@ -273,4 +273,22 @@
 * *2 hours* Solve automatic evaluation git problems 
 * *2 hours* Finish up the automatic evaluation loop function
 * *0.5 hours* Supervisor meeting
+* *2 hours* Make an evaluate.py method that takes the evaluation metrics for refactorings in the repo and displays them in a table and a chart
+* 1 hour* Run the new script on the toy repo and look at the results
+
+## Week 19
+### 29 Jan 2024
+* *3 hours* Try making sense of the results and research the bug
+
+### 1 Feb 2024
+* *2 hours* Research the problems 
+* *3 hours* Return the taskId of the analysis from bash and make sure the evaluation is run after the analysis is complete
+
+### 2 Feb 2024
+* *1 hour* Make the aggregate graph for all of the refactorings in the repo
+* *1 hour* Add more refactoring types to the miner
+* *1 hour* Find large Java repos with many stars and run the pipeline on them
+* *1 hour* Think about a way of choosing the best repo for the evaluation
+* *0.5 hours* Supervisor meeting
+* *0.5 hours* Post-supervisor meeting work
 
