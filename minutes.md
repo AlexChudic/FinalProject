@@ -154,3 +154,11 @@
   2. Try to play with Langchain, and see if you can use it for refactoring that affects multiple files.
   3. Try collecting the dataset to use for evaluation afterward
      - Perform the whole single-file experiment on some of them
+
+## Meeting 11 - 2.2.2023
+- Finished the initial version of the pipeline
+    - The results look pretty decent - table and chart
+- Talked about how to choose the repositories for the evaluation to make sure the sample is representative of the population
+- The long evaluation computation time and minor cost associated with running the pipeline
+    - Might be okay to only take a sample (1000?) of commits for every repository
+- Important to write a good readMe so that the pipeline is reproducable
