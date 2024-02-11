@@ -13,7 +13,6 @@ sonar_token="$2"
 # Change to the specified directory
 
 current_directory=$(pwd)
-echo "Current Working Directory: $current_directory"
 cd "$directory" || exit 1
 
 sonar_scanner_output=$(sonar-scanner \
