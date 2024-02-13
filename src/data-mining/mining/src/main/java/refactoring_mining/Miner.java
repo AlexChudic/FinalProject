@@ -1,14 +1,7 @@
 package refactoring_mining;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.refactoringminer.api.GitHistoryRefactoringMiner;
@@ -18,12 +11,6 @@ import org.refactoringminer.api.RefactoringHandler;
 import org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl;
 import org.refactoringminer.util.GitServiceImpl;
 
-import gr.uom.java.xmi.UMLModel;
-import gr.uom.java.xmi.decomposition.AbstractCodeFragment;
-import gr.uom.java.xmi.decomposition.AbstractCodeMapping;
-import gr.uom.java.xmi.decomposition.CompositeStatementObject;
-import gr.uom.java.xmi.decomposition.StatementObject;
-import gr.uom.java.xmi.decomposition.UMLOperationBodyMapper;
 import gr.uom.java.xmi.diff.AddClassAnnotationRefactoring;
 import gr.uom.java.xmi.diff.AddParameterRefactoring;
 import gr.uom.java.xmi.diff.ChangeClassAccessModifierRefactoring;
@@ -36,10 +23,8 @@ import gr.uom.java.xmi.diff.InlineOperationRefactoring;
 import gr.uom.java.xmi.diff.MoveAttributeRefactoring;
 import gr.uom.java.xmi.diff.MoveClassRefactoring;
 import gr.uom.java.xmi.diff.MoveOperationRefactoring;
-import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.RenameOperationRefactoring;
 import gr.uom.java.xmi.diff.RenameVariableRefactoring;
-import gr.uom.java.xmi.diff.UMLModelDiff;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -49,8 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -80,6 +63,11 @@ public class Miner {
         }
     }
 
+    /**
+	 * Get the parent commit id of a commit.
+	 * @param commitId The child commit id
+     * @return The parent commit id
+	 */
     public String getParentCommitId(String commitId) {
         try{
             RevCommit commit = getCommitById(commitId);
@@ -96,10 +84,26 @@ public class Miner {
         }
     }
 
+    /**
+	 * Get the RevCommit object from a commit id
+	 * @param commitId The commit id
+     * @return The RevCommit object
+	 */
     private RevCommit getCommitById(String commitId) throws IOException {
         return repoWalk.parseCommit(repo.resolve(commitId));
     }
 
+     /**
+	 * Indicate commits that should be ignored.
+	 * You may override this method to implement custom logic.
+	 *  
+	 * @param ref The refactoring object.
+     * @param refId The refactoring id.
+     * @param parentCodeRange The code range of the parent file.
+     * @param newCodeRange The code range of the new file.
+     * @param folderPath The folder path of the repository.
+     * @return The JSON object of the refactoring.
+	 */
     private JSONObject createJSONForRefactoring(Refactoring ref, String refId, CodeRange parentCodeRange, CodeRange newCodeRange, String folderPath){
         JSONObject json = new JSONObject();
         json.put("refactoringType", ref.getRefactoringType().toString());
@@ -143,6 +147,13 @@ public class Miner {
         return json;
     }
 
+    /**
+	 * Find the refactoring type and create a JSON object for the refactoring.
+	 * @param ref The refactoring object.
+     * @param refId The refactoring id.
+     * @param folderPath The folder path of the repository.
+     * @return The JSON object of the refactoring.
+	 */
     private JSONObject getRefactoringData(Refactoring ref, String refId, String folderPath){
         JSONObject json = new JSONObject();
         if(ref instanceof ExtractOperationRefactoring) { 
@@ -249,7 +260,14 @@ public class Miner {
         return json;
     }
 
-    private void buildPromptContext(Refactoring ref, String refId, String folderPath){
+    /**
+	 * Get the data for the refactoring and save it to a JSON file.
+	 * @param ref The refactoring object.
+     * @param refId The refactoring id.
+     * @param folderPath The folder path of the repository.
+     * @param onlySingleFile A boolean to indicate if ONLY single file refactorings should be saved.
+	 */
+    private void buildPromptContext(Refactoring ref, String refId, String folderPath, Boolean onlySingleFile){
         JSONObject json = getRefactoringData(ref, refId, folderPath);
         String folder = "refactoring-data/" + folderPath.substring(4);
         if( !Files.exists(Paths.get(folder))){
@@ -260,17 +278,19 @@ public class Miner {
             }
         }
 
-        String filePath = "refactoring-data/" + folderPath.substring(4) + "/" + refId + ".json";
+        if( !onlySingleFile || HelperTools.isSingleFileRefactoring(json)){
+            String filePath = "refactoring-data/" + folderPath.substring(4) + "/" + refId + ".json";
 
-        try (FileWriter fileWriter = new FileWriter(filePath)){
-            fileWriter.write(json.toString());
+            try (FileWriter fileWriter = new FileWriter(filePath)){
+                fileWriter.write(json.toString());
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public void generateJsonForAllRefactorings(String folderPath){
+    public void generateJsonForAllSingleFileRefactorings(String folderPath){
         try {
             miner.detectAll(this.repo, this.branch, new RefactoringHandler() {
                 @Override
@@ -280,7 +300,7 @@ public class Miner {
                     for (Refactoring ref : refactorings) {
                         System.out.println(ref.toString());
                         String refId = commitId + "-" + id;
-                        buildPromptContext(ref, refId, folderPath);
+                        buildPromptContext(ref, refId, folderPath, true);
                         id++;
                     }
                 }
@@ -290,6 +310,12 @@ public class Miner {
         }
     }
 
+    /**
+	 * Add the file content to the JSON object.
+	 * @param JSONFilePath The path of the JSON file.
+     * @param repoFolderPath The path of the repository with the codebase.
+     * @param after A boolean to indicate if the content of the file after or before the refactoring should be added.
+	 */
     private static void populateJsonWithFileContent(Path JSONFilePath, String repoFolderPath, Boolean after) {
         try{
             String jsonString = new String(Files.readAllBytes(JSONFilePath));
@@ -326,9 +352,12 @@ public class Miner {
         } catch (Exception e) {
             e.printStackTrace();
         } 
-        
     }
 
+    /**
+	 * Add the file content before and after the refactoring to the JSON object and get the LLM refactoring.
+     * @param repoFolderPath The path of the repository with the codebase.
+	 */
     public void populateFileContentOnCommitsAndGetLLMRefactorings(String repoFolderPath) {
         String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
         try {
@@ -364,6 +393,10 @@ public class Miner {
         }
     }
 
+    /**
+	 * Traverse the jsons and get the evaluations for all single file refactorings.
+     * @param repoFolderPath The path of the repository with the codebase.
+	 */
     public void evaluateSingleFileRefactorings(String repoFolderPath){
         String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
         RepositoryEvaluator evaluator = new RepositoryEvaluator(repoFolderPath);
@@ -410,6 +443,11 @@ public class Miner {
         }
     }
 
+    /**
+	 * Set repository of the miner object.
+     * @param folder The local path where to clone repo.    
+     * @param url The url of the Gitrepository.
+	 */
     public void setRepo(String folder, String url) {
         try {
             this.repo = gitService.cloneIfNotExists(folder, url);
@@ -418,6 +456,9 @@ public class Miner {
         }
     }
 
+    /**
+	 * @return The repository of the miner object.
+	 */
     public Repository getRepo() {
         return this.repo;
     }

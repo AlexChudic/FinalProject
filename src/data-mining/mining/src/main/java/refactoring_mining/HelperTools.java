@@ -120,6 +120,7 @@ public class HelperTools {
         }
         return null;
     }
+
     public static boolean isSingleFileRefactoring(String JSONPath){
         try {
             String jsonString = new String(Files.readAllBytes(Paths.get(JSONPath)));
@@ -137,6 +138,16 @@ public class HelperTools {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public static boolean isSingleFileRefactoring(JSONObject json){
+        if (json.has("beforeRefactoring") && json.getJSONObject("beforeRefactoring").has("filePath") &&
+            json.has("afterRefactoring") && json.getJSONObject("afterRefactoring").has("filePath") &&
+            json.getJSONObject("beforeRefactoring").getString("filePath").equals(json.getJSONObject("afterRefactoring").getString("filePath"))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static String convertArrayOfStringsToSingleString(JSONArray array){
