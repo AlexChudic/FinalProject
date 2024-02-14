@@ -292,3 +292,29 @@
 * *0.5 hours* Supervisor meeting
 * *0.5 hours* Post-supervisor meeting work
 
+## Week 20
+### 6 February 2024
+* *1 hours* Looking at ways of choosing a good sample
+* *2 hours* Try getting the population of GitHub repository 
+
+### 7 February 2024
+* *5 hours* Try getting the population of GitHub repository - fixing bugs
+
+### 8 February 2024
+* *2 hours*  Try getting the population of GitHub repository 
+* *0.5 hours* Look at the sampling methods 
+
+### 9 February 2024
+* *1.5 hours* Perform sampling and generate graphs
+* *1 hour* Supervisor meeting
+
+## Week 21
+### 12 February 2024
+* *2 hours* Thinking about the dissertation structure and writing a little
+
+### 13 February 2024
+* *1 hour* Looking at not included refactoring types and more
+
+### 14 February 2024
+* *2 hours* Including all of the refactoring types in the evaluation
+
