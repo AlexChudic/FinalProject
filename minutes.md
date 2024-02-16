@@ -121,7 +121,7 @@
 - Should focus on finishing the pipeline so I can evaluate the results and establish an understanding
 - Received some interesting resources I should look at
 
-## Meeting 9 - 19.1.2023
+## Meeting 9 - 19.1.2024
 - Talked about the progress in the pipeline - all parts pretty much finished, just trying to link them together
     - Problem with ChatGPT -> should try Llama hosted by the university
 - Evaluation will be looking at the differences between the
@@ -130,7 +130,7 @@
 - Look at other prompt engineering papers, guidelines and ideas
     - RQ2: Does prompt engineering lead to better results?
 - Important Detailed README file to be able to replicate what I did
-- Brief description of the code is enough (some diagram might be nice)
+- A brief description of the code is enough (some diagram might be nice)
 
 ###  Next steps
   1. Complete the pipeline
@@ -139,7 +139,7 @@
   3. Look at papers about prompt engineering and test other prompt designs
   4. Start writing down some ideas for the dissertation
 
-## Meeting 10 - 26.1.2023
+## Meeting 10 - 26.1.2024
 - Talked about the progress in the pipeline
     - Made ChatGPT Work
     - Worked on automatic evaluation
@@ -149,16 +149,38 @@
 
 ###  Next steps
   1. Complete the experiment only considering the refactoring that is in a single file (i.e., cases where there is only a single refactoring in that file)
-     - In that case, you will first ask LLM to refactor the code , because we want to answer the following RQ: Can LLMs detect the type of refactoring they must do?
+     - In that case, you will first ask LLM to refactor the code, because we want to answer the following RQ: Can LLMs detect the type of refactoring they must do?
      - In the second experiment you can give the "description" of the Refactoring miner as the prompt.
   2. Try to play with Langchain, and see if you can use it for refactoring that affects multiple files.
   3. Try collecting the dataset to use for evaluation afterward
      - Perform the whole single-file experiment on some of them
 
-## Meeting 11 - 2.2.2023
+## Meeting 11 - 2.2.2024
 - Finished the initial version of the pipeline
     - The results look pretty decent - table and chart
 - Talked about how to choose the repositories for the evaluation to make sure the sample is representative of the population
 - The long evaluation computation time and minor cost associated with running the pipeline
     - Might be okay to only take a sample (1000?) of commits for every repository
-- Important to write a good readMe so that the pipeline is reproducable
+- Important to write a good readMe so that the pipeline is reproducible
+
+
+## Meeting 12 - 9.2.2024
+- Looked at the representative sample size
+- Is the GitHub repo star count a good metric to consider for creating distribution?
+
+## Meeting 13 - 16.2.2024
+- Summarizing the progress, describing the sampling process of the repositories
+- Talking about what prompts to use
+    - Is specifying the rows of the code where refactoring miner is performed appropriately? Is there any practical use case?
+    - Yes - the software developer is working on functionality in a section of the class (i.e. a method) and wants to check whether any refactorings can be performed.
+- Temperature discussion
+    - For the default temperature (0.7) each prompt should be run multiple times (10ish) and the output variance needs to be considered, introducing new evaluation metrics
+    - For the lower temperature (e.g. 0.2) it might not be necessary to run each prompt many times, making it more convenient
+ 
+###  Next steps
+  1. Complete the experiment only considering the refactoring that is in a single file (i.e., cases where there is only a single refactoring in that file)
+     - Experiment with the temperature - see if 0.2 temp gives reasonable refactorings
+  2. Estimate the costs of running it on the pipeline on 62 repos
+  3. Run the pipeline on all of the sampled repos
+
+
