@@ -11,25 +11,89 @@ import org.refactoringminer.api.RefactoringHandler;
 import org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl;
 import org.refactoringminer.util.GitServiceImpl;
 
+import gr.uom.java.xmi.diff.AddAttributeAnnotationRefactoring;
+import gr.uom.java.xmi.diff.AddAttributeModifierRefactoring;
 import gr.uom.java.xmi.diff.AddClassAnnotationRefactoring;
+import gr.uom.java.xmi.diff.AddClassModifierRefactoring;
+import gr.uom.java.xmi.diff.AddMethodAnnotationRefactoring;
+import gr.uom.java.xmi.diff.AddMethodModifierRefactoring;
 import gr.uom.java.xmi.diff.AddParameterRefactoring;
+import gr.uom.java.xmi.diff.AddThrownExceptionTypeRefactoring;
+import gr.uom.java.xmi.diff.AddVariableAnnotationRefactoring;
+import gr.uom.java.xmi.diff.AddVariableModifierRefactoring;
+import gr.uom.java.xmi.diff.AssertThrowsRefactoring;
+import gr.uom.java.xmi.diff.ChangeAttributeAccessModifierRefactoring;
+import gr.uom.java.xmi.diff.ChangeAttributeTypeRefactoring;
 import gr.uom.java.xmi.diff.ChangeClassAccessModifierRefactoring;
 import gr.uom.java.xmi.diff.ChangeOperationAccessModifierRefactoring;
+import gr.uom.java.xmi.diff.ChangeReturnTypeRefactoring;
+import gr.uom.java.xmi.diff.ChangeThrownExceptionTypeRefactoring;
+import gr.uom.java.xmi.diff.ChangeTypeDeclarationKindRefactoring;
 import gr.uom.java.xmi.diff.ChangeVariableTypeRefactoring;
 import gr.uom.java.xmi.diff.CodeRange;
+import gr.uom.java.xmi.diff.CollapseHierarchyRefactoring;
+import gr.uom.java.xmi.diff.EncapsulateAttributeRefactoring;
 import gr.uom.java.xmi.diff.ExtractAttributeRefactoring;
+import gr.uom.java.xmi.diff.ExtractClassRefactoring;
 import gr.uom.java.xmi.diff.ExtractOperationRefactoring;
+import gr.uom.java.xmi.diff.ExtractSuperclassRefactoring;
+import gr.uom.java.xmi.diff.ExtractVariableRefactoring;
+import gr.uom.java.xmi.diff.InlineAttributeRefactoring;
 import gr.uom.java.xmi.diff.InlineOperationRefactoring;
+import gr.uom.java.xmi.diff.InlineVariableRefactoring;
+import gr.uom.java.xmi.diff.InvertConditionRefactoring;
+import gr.uom.java.xmi.diff.MergeAttributeRefactoring;
+import gr.uom.java.xmi.diff.MergeCatchRefactoring;
+import gr.uom.java.xmi.diff.MergeClassRefactoring;
+import gr.uom.java.xmi.diff.MergeConditionalRefactoring;
+import gr.uom.java.xmi.diff.MergeOperationRefactoring;
+import gr.uom.java.xmi.diff.MergePackageRefactoring;
+import gr.uom.java.xmi.diff.MergeVariableRefactoring;
+import gr.uom.java.xmi.diff.ModifyAttributeAnnotationRefactoring;
+import gr.uom.java.xmi.diff.ModifyClassAnnotationRefactoring;
+import gr.uom.java.xmi.diff.ModifyMethodAnnotationRefactoring;
+import gr.uom.java.xmi.diff.ModifyVariableAnnotationRefactoring;
+import gr.uom.java.xmi.diff.MoveAndRenameAttributeRefactoring;
+import gr.uom.java.xmi.diff.MoveAndRenameClassRefactoring;
 import gr.uom.java.xmi.diff.MoveAttributeRefactoring;
 import gr.uom.java.xmi.diff.MoveClassRefactoring;
+import gr.uom.java.xmi.diff.MoveCodeRefactoring;
 import gr.uom.java.xmi.diff.MoveOperationRefactoring;
+import gr.uom.java.xmi.diff.ParameterizeTestRefactoring;
+import gr.uom.java.xmi.diff.PullUpOperationRefactoring;
+import gr.uom.java.xmi.diff.RemoveAttributeAnnotationRefactoring;
+import gr.uom.java.xmi.diff.RemoveAttributeModifierRefactoring;
+import gr.uom.java.xmi.diff.RemoveClassAnnotationRefactoring;
+import gr.uom.java.xmi.diff.RemoveClassModifierRefactoring;
+import gr.uom.java.xmi.diff.RemoveMethodAnnotationRefactoring;
+import gr.uom.java.xmi.diff.RemoveMethodModifierRefactoring;
+import gr.uom.java.xmi.diff.RemoveParameterRefactoring;
+import gr.uom.java.xmi.diff.RemoveThrownExceptionTypeRefactoring;
+import gr.uom.java.xmi.diff.RemoveVariableAnnotationRefactoring;
+import gr.uom.java.xmi.diff.RemoveVariableModifierRefactoring;
+import gr.uom.java.xmi.diff.RenameAttributeRefactoring;
+import gr.uom.java.xmi.diff.RenameClassRefactoring;
 import gr.uom.java.xmi.diff.RenameOperationRefactoring;
+import gr.uom.java.xmi.diff.RenamePackageRefactoring;
 import gr.uom.java.xmi.diff.RenameVariableRefactoring;
+import gr.uom.java.xmi.diff.ReorderParameterRefactoring;
+import gr.uom.java.xmi.diff.ReplaceAnonymousWithClassRefactoring;
+import gr.uom.java.xmi.diff.ReplaceAnonymousWithLambdaRefactoring;
+import gr.uom.java.xmi.diff.ReplaceAttributeRefactoring;
+import gr.uom.java.xmi.diff.ReplaceLoopWithPipelineRefactoring;
+import gr.uom.java.xmi.diff.ReplacePipelineWithLoopRefactoring;
+import gr.uom.java.xmi.diff.SplitAttributeRefactoring;
+import gr.uom.java.xmi.diff.SplitClassRefactoring;
+import gr.uom.java.xmi.diff.SplitConditionalRefactoring;
+import gr.uom.java.xmi.diff.SplitOperationRefactoring;
+import gr.uom.java.xmi.diff.SplitPackageRefactoring;
+import gr.uom.java.xmi.diff.SplitVariableRefactoring;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Parameter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -160,54 +224,45 @@ public class Miner {
             ExtractOperationRefactoring ex = (ExtractOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeExtraction();
             CodeRange newCodeRange = ex.getSourceOperationCodeRangeAfterExtraction();
-
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if(ref instanceof ExtractAttributeRefactoring) { 
-            ExtractAttributeRefactoring ex = (ExtractAttributeRefactoring) ref;
-            List<CodeRange> left = ex.leftSide(); 
-            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
-            List<CodeRange> right = ex.rightSide();
-            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
-            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if(ref instanceof InlineOperationRefactoring) { 
+        } else if(ref instanceof InlineOperationRefactoring) { 
             InlineOperationRefactoring ex = (InlineOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getTargetOperationCodeRangeBeforeInline();
             CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterInline();
 
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if(ref instanceof RenameOperationRefactoring) { 
+        } else if(ref instanceof RenameOperationRefactoring) { 
             RenameOperationRefactoring ex = (RenameOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeRename();
             CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterRename();
 
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if(ref instanceof RenameVariableRefactoring) { 
-            RenameVariableRefactoring ex = (RenameVariableRefactoring) ref;
-            List<CodeRange> left = ex.leftSide(); 
-            // TODO try using getInvolvedClassesBeforeRefactoring & getInvolvedClassesAfterRefactoring functions
-            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
-            List<CodeRange> right = ex.rightSide();
-            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
-            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if(ref instanceof MoveOperationRefactoring) { 
+        } else if(ref instanceof MoveOperationRefactoring) { 
             MoveOperationRefactoring ex = (MoveOperationRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceOperationCodeRangeBeforeMove();
             CodeRange newCodeRange = ex.getTargetOperationCodeRangeAfterMove();
 
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if(ref instanceof MoveAttributeRefactoring) { 
+        } else if(ref instanceof MoveAttributeRefactoring) { 
             MoveAttributeRefactoring ex = (MoveAttributeRefactoring) ref;
             CodeRange parentCodeRange = ex.getSourceAttributeCodeRangeBeforeMove();
             CodeRange newCodeRange = ex.getTargetAttributeCodeRangeAfterMove();
 
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // PullUpOperationRefactoring - does not perform single file refactoring (only rightSide method available)
+        // PullUpAttributeRefactoring - does not perform single file refactoring (only rightSide method available)
+        // PushDownOperationRefactoring - does not perform single file refactoring (only rightSide method available)
+        // PushDownAttributeRefactoring - does not perform single file refactoring (only rightSide method available)
+        else if(ref instanceof ExtractSuperclassRefactoring) { 
+            ExtractSuperclassRefactoring ex = (ExtractSuperclassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
+        // ExtractInterfaceRefactoring - not found in the library
         else if( ref instanceof MoveClassRefactoring){
             MoveClassRefactoring ex = (MoveClassRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
@@ -215,48 +270,521 @@ public class Miner {
             List<CodeRange> right = ex.rightSide();
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof RenameClassRefactoring) { 
+            RenameClassRefactoring ex = (RenameClassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
-        else if( ref instanceof ChangeVariableTypeRefactoring){
+        // ExtractAndMoveClassRefactoring - not found in the library
+        else if(ref instanceof RenamePackageRefactoring) { 
+            RenamePackageRefactoring ex = (RenamePackageRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof MoveAndRenameClassRefactoring) { 
+            MoveAndRenameClassRefactoring ex = (MoveAndRenameClassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if (ref instanceof ExtractClassRefactoring){
+            ExtractClassRefactoring ex = (ExtractClassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // ExtractSubclassRefactoring - not found in the library
+        else if ( ref instanceof ExtractVariableRefactoring){
+            ExtractVariableRefactoring ex = (ExtractVariableRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof InlineVariableRefactoring) { 
+            InlineVariableRefactoring ex = (InlineVariableRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // ParameterizeVariableRefactoring - not found in the library
+        else if(ref instanceof RenameVariableRefactoring) { 
+            RenameVariableRefactoring ex = (RenameVariableRefactoring) ref;
+            // TODO try using getInvolvedClassesBeforeRefactoring & getInvolvedClassesAfterRefactoring functions
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // RenameParameterRefactoring - not found in the library
+        else if(ref instanceof RenameAttributeRefactoring) { 
+            RenameAttributeRefactoring ex = (RenameAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof MoveAndRenameAttributeRefactoring) { 
+            MoveAndRenameAttributeRefactoring ex = (MoveAndRenameAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // ReplaceVariableWithAttributeRefactoring - not found in the library
+        else if(ref instanceof ReplaceAttributeRefactoring) { 
+            ReplaceAttributeRefactoring ex = (ReplaceAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof MergeVariableRefactoring) { 
+            MergeVariableRefactoring ex = (MergeVariableRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // MergeParameterRefactoring - not found in the library
+        else if(ref instanceof MergeOperationRefactoring) {
+            MergeOperationRefactoring ex = (MergeOperationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof MergeAttributeRefactoring) { 
+            MergeAttributeRefactoring ex = (MergeAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof SplitVariableRefactoring) { 
+            SplitVariableRefactoring ex = (SplitVariableRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // SplitParameterRefactoring - not found in the library
+        else if(ref instanceof SplitOperationRefactoring) { 
+            SplitOperationRefactoring ex = (SplitOperationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof SplitAttributeRefactoring) { 
+            SplitAttributeRefactoring ex = (SplitAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof ChangeVariableTypeRefactoring) { 
             ChangeVariableTypeRefactoring ex = (ChangeVariableTypeRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if( ref instanceof AddParameterRefactoring){
-            AddParameterRefactoring ex = (AddParameterRefactoring) ref;
+        } 
+        // ChangeParameterTypeRefactoring - not found in the library
+        else if(ref instanceof ChangeReturnTypeRefactoring) { 
+            ChangeReturnTypeRefactoring ex = (ChangeReturnTypeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof ChangeAttributeTypeRefactoring) { 
+            ChangeAttributeTypeRefactoring ex = (ChangeAttributeTypeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if(ref instanceof ExtractAttributeRefactoring) { 
+            ExtractAttributeRefactoring ex = (ExtractAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // MoveAndRenameOperation - not found in the library
+        // MoveAndInlineOperation - not found in the library
+        else if(ref instanceof AddMethodAnnotationRefactoring) { 
+            AddMethodAnnotationRefactoring ex = (AddMethodAnnotationRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         }
-        else if( ref instanceof ChangeClassAccessModifierRefactoring){
-            ChangeClassAccessModifierRefactoring ex = (ChangeClassAccessModifierRefactoring) ref;
+        else if(ref instanceof RemoveMethodAnnotationRefactoring) { 
+            RemoveMethodAnnotationRefactoring ex = (RemoveMethodAnnotationRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if( ref instanceof ChangeOperationAccessModifierRefactoring){
-            ChangeOperationAccessModifierRefactoring ex = (ChangeOperationAccessModifierRefactoring) ref;
+        } else if(ref instanceof ModifyMethodAnnotationRefactoring) { 
+            ModifyMethodAnnotationRefactoring ex = (ModifyMethodAnnotationRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-        else if( ref instanceof AddClassAnnotationRefactoring){
+        } else if(ref instanceof AddAttributeAnnotationRefactoring) { 
+            AddAttributeAnnotationRefactoring ex = (AddAttributeAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof RemoveAttributeAnnotationRefactoring){
+            RemoveAttributeAnnotationRefactoring ex = (RemoveAttributeAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ModifyAttributeAnnotationRefactoring){
+            RemoveAttributeAnnotationRefactoring ex = (RemoveAttributeAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof AddClassAnnotationRefactoring){
             AddClassAnnotationRefactoring ex = (AddClassAnnotationRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
-        }
-
+        } else if( ref instanceof RemoveClassAnnotationRefactoring){
+            RemoveClassAnnotationRefactoring ex = (RemoveClassAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ModifyClassAnnotationRefactoring){
+            ModifyClassAnnotationRefactoring ex = (ModifyClassAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // AddParameterAnnotationRefactoring - not found in the library
+        // RemoveParameterAnnotationRefactoring - not found in the library
+        // ModifyParameterAnnotationRefactoring - not found in the library
+        else if( ref instanceof AddVariableAnnotationRefactoring){
+            AddVariableAnnotationRefactoring ex = (AddVariableAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof RemoveVariableAnnotationRefactoring){
+            RemoveVariableAnnotationRefactoring ex = (RemoveVariableAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ModifyVariableAnnotationRefactoring){
+            ModifyVariableAnnotationRefactoring ex = (ModifyVariableAnnotationRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof AddParameterRefactoring){
+            AddParameterRefactoring ex = (AddParameterRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof RemoveParameterRefactoring){
+            RemoveParameterRefactoring ex = (RemoveParameterRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ReorderParameterRefactoring){
+            ReorderParameterRefactoring ex = (ReorderParameterRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof AddThrownExceptionTypeRefactoring){
+            AddThrownExceptionTypeRefactoring ex = (AddThrownExceptionTypeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof RemoveThrownExceptionTypeRefactoring){
+            RemoveThrownExceptionTypeRefactoring ex = (RemoveThrownExceptionTypeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ChangeThrownExceptionTypeRefactoring){
+            ChangeThrownExceptionTypeRefactoring ex = (ChangeThrownExceptionTypeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ChangeOperationAccessModifierRefactoring){
+            ChangeOperationAccessModifierRefactoring ex = (ChangeOperationAccessModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ChangeAttributeAccessModifierRefactoring){
+            ChangeAttributeAccessModifierRefactoring ex = (ChangeAttributeAccessModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof EncapsulateAttributeRefactoring){
+            EncapsulateAttributeRefactoring ex = (EncapsulateAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // ParameterizeAttributeRefactoring - not found in the library
+        // ReplaceAttributeWithVariableRefactoring - not found in the library
+        else if( ref instanceof AddMethodModifierRefactoring){
+            AddMethodModifierRefactoring ex = (AddMethodModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof RemoveMethodModifierRefactoring){
+            RemoveMethodModifierRefactoring ex = (RemoveMethodModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof AddAttributeModifierRefactoring){
+            AddAttributeModifierRefactoring ex = (AddAttributeModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof RemoveAttributeModifierRefactoring){
+            RemoveAttributeModifierRefactoring ex = (RemoveAttributeModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof AddVariableModifierRefactoring){
+            AddVariableModifierRefactoring ex = (AddVariableModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // RemoveParameterModifierRefactoring - not found in the library
+        // AddParameterModifierRefactoring - not found in the library
+        else if( ref instanceof RemoveVariableModifierRefactoring){
+            RemoveVariableModifierRefactoring ex = (RemoveVariableModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ChangeClassAccessModifierRefactoring){
+            ChangeClassAccessModifierRefactoring ex = (ChangeClassAccessModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof AddClassModifierRefactoring){
+            AddClassModifierRefactoring ex = (AddClassModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof RemoveClassModifierRefactoring){
+            RemoveClassModifierRefactoring ex = (RemoveClassModifierRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // MovePackageRefactoring - not found in the library
+        else if( ref instanceof SplitPackageRefactoring){
+            SplitPackageRefactoring ex = (SplitPackageRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof MergePackageRefactoring){
+            MergePackageRefactoring ex = (MergePackageRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // LocalizeVariableRefactoring - not found in the library
+        else if( ref instanceof ChangeTypeDeclarationKindRefactoring){
+            ChangeTypeDeclarationKindRefactoring ex = (ChangeTypeDeclarationKindRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof CollapseHierarchyRefactoring){
+            CollapseHierarchyRefactoring ex = (CollapseHierarchyRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ReplaceLoopWithPipelineRefactoring){
+            ReplaceLoopWithPipelineRefactoring ex = (ReplaceLoopWithPipelineRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ReplaceAnonymousWithLambdaRefactoring){
+            ReplaceAnonymousWithLambdaRefactoring ex = (ReplaceAnonymousWithLambdaRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof MergeClassRefactoring){
+            MergeClassRefactoring ex = (MergeClassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof InlineAttributeRefactoring){
+            InlineAttributeRefactoring ex = (InlineAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ReplacePipelineWithLoopRefactoring){
+            InlineAttributeRefactoring ex = (InlineAttributeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof SplitClassRefactoring){
+            SplitClassRefactoring ex = (SplitClassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof SplitConditionalRefactoring){
+            SplitConditionalRefactoring ex = (SplitConditionalRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof InvertConditionRefactoring){
+            InvertConditionRefactoring ex = (InvertConditionRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof MergeConditionalRefactoring){
+            MergeConditionalRefactoring ex = (MergeConditionalRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof MergeCatchRefactoring){
+            MergeCatchRefactoring ex = (MergeCatchRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
+        // MergeMethodRefactoring - not found in the library
+        // SplitMethodRefactoring - not found in the library
+        else if( ref instanceof MoveCodeRefactoring){
+            MoveCodeRefactoring ex = (MoveCodeRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ReplaceAnonymousWithClassRefactoring){
+            ReplaceAnonymousWithClassRefactoring ex = (ReplaceAnonymousWithClassRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof ParameterizeTestRefactoring){
+            ParameterizeTestRefactoring ex = (ParameterizeTestRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } else if( ref instanceof AssertThrowsRefactoring){
+            AssertThrowsRefactoring ex = (AssertThrowsRefactoring) ref;
+            List<CodeRange> left = ex.leftSide(); 
+            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            List<CodeRange> right = ex.rightSide();
+            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
+        } 
         return json;
     }
 
