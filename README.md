@@ -1,5 +1,4 @@
 # Assessing LLMs’ Code Refactoring Skills
-
 ### Supervisor: Handan Gul Calikli
 
 ### Description:
@@ -10,3 +9,10 @@ We will conduct experiments with (novice and experienced) developers to gain ins
 
 ##### References:
 [1] Martin Fowler, Improving the Design of Existing Code. Addison-Wesley, 2019.
+
+## Setup and Compilation
+
+### Running the modules
+It is possible to run submodules on its own from the terminal. Make sure these commands are executed from the root repository folder.
+- Use `python src/evaluation.py refactoring-data/<repositoryName>` for generating the evaluation metrics for the generated refactoring jsons
+- Use `python src/useGPT.py refactoring-data/<refactoringJsonPath>` for prompting the GPT3.5 Turbo about how to refactor the code 
