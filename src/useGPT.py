@@ -5,11 +5,10 @@ import pandas as pd
 import os
 import json
 import time
-
+import tiktoken
 
 def join_file(file_lines):
     return '\n'.join(file_lines)
-
 
 def construct_simple_prompt(file, changes_start=None, changes_end=None):
     if changes_end:
@@ -21,21 +20,62 @@ def construct_simple_prompt(file, changes_start=None, changes_end=None):
     
     # TODO: add prompt which adds the refactoring miner message
     
+def try_prompting(prompt, args, count=0):
+    try:
+        return ask_chatGPT(prompt, args)
+    except Exception as e:
+        print(f"Error: {e}")
+        print(f"Waiting 10 seconds before trying again... {count}'th attempt.")
+        time.sleep(10)
+        return try_prompting(prompt, args, count+1) if count <= 6 else None
 
-def ask_chatGPT( prompt ):
+def ask_chatGPT( prompt, args ):
     client = OpenAI()
     print("Asking GPT-3...")
-    print(prompt)
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo-1106",
-        messages=[
+    #print(prompt)
+
+    # get the number of tokens in the message
+    msg = [
         {"role": "system", "content": "You are a code quality analyst. Pay close attention to the readability, code smells, and cognitive complexity. Your goal is to optimize the code without changing the functionality. No explanations are needed."},
         {"role": "user", "content": prompt }
-        ]
+    ]
+    num_tokens = num_tokens_in_string(" ".join(item["content"] for item in msg))
+    print(f"Number of tokens in the message: {num_tokens}")
+    
+    # only run the request if the number of remaning tokens is at least 2.5 times the number of tokens in the message
+    if args["TPM_available"] < num_tokens*2.5:
+        print("Waiting for the token limit to reset...")
+        time.sleep(args["TPM_resetTime"])
+    
+    elif args["RPM_available"] <= 0:
+        print("Waiting for the request limit to reset...")
+        time.sleep(args["RPM_resetTime"])
+
+    raw_response = client.chat.completions.with_raw_response.create(
+        model="gpt-3.5-turbo-1106",
+        messages=msg,
+        temperature=0.2, # use 0.2 for more consistent answers
     )
-    print(response.choices[0].message.content)
-    time.sleep(1) # Wait to avoid exceeding the API limit
+    response = raw_response.parse()
+
+    # update the number of remaining tokens and requests
+    if( raw_response.status_code == 200 ):
+        args["TPM_available"] = int(raw_response.headers['x-ratelimit-remaining-tokens'])
+        args["TPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-tokens'][:-1])
+        args["RPM_available"] = int(raw_response.headers['x-ratelimit-remaining-requests'])
+        args["RPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-requests'][:-1])
+    else:
+        print(f"Error: {response.error.message}")
+        print(response)
+
+    # print(response.choices[0].message.content)
+    print(f"Tokens used in the request and answer: {response.usage.total_tokens}; Remaining tokens: {args['TPM_available']}; Reset time: {args['TPM_resetTime']}; Remaining requests: {args['RPM_available']}; Reset time: {args['RPM_resetTime']}")
     return response.choices[0].message.content
+
+def num_tokens_in_string(string) -> int:
+    encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
 
 def JSON_to_dataFrame(JSON_path):
     if os.path.isfile(JSON_path) and JSON_path[-4:] == "json":
@@ -45,18 +85,26 @@ def JSON_to_dataFrame(JSON_path):
     else:
         return None
 
-def get_LLM_refactorings_for_file(JSON_path):
+def get_LLM_refactorings_for_file(JSON_path, args=None):
+    start_time = time.time()
     refactoring = JSON_to_dataFrame(JSON_path)
-    if refactoring is not None:
+    if args is None:
+        args = init_args()
+    if refactoring is not None and isSingleFileRefactoring(refactoring):
         if "beforeRefactoring" in refactoring and "file" in refactoring["beforeRefactoring"]:
-            prompt1 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]))
-            LLM_answer = ask_chatGPT(prompt1)
+            print(f"Processing the json file using GPT-3.5-turbo-1106: {JSON_path} ")
+            prompt0 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]), "getTypeOfRefactoringPrompt")
+            LLM_answer = try_prompting(prompt0, args)
             refactoring['LLMRefactoring'] = {}
+            refactoring['LLMRefactoring']['typeOfRefactoring'] = LLM_answer
+            
+            prompt1 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]))
+            LLM_answer = try_prompting(prompt1, args)
             refactoring['LLMRefactoring']['simplePrompt'] = LLM_answer
 
             if "startLine" in refactoring["beforeRefactoring"] and "endLine" in refactoring["beforeRefactoring"]:
                 prompt2 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]), refactoring["beforeRefactoring"]["startLine"], refactoring["beforeRefactoring"]["endLine"])
-                LLM_answer = ask_chatGPT(prompt2)
+                LLM_answer = try_prompting(prompt2, args)
                 refactoring['LLMRefactoring']['simplePromptWithColumns'] = LLM_answer
 
             refactoring['LLMRefactoringGenerated'] = True
@@ -65,11 +113,16 @@ def get_LLM_refactorings_for_file(JSON_path):
             print(f"DataFrame {JSON_path} successfully saved!")
     else:
         print(f"Invalid JSON file: {JSON_path}")
+    print(f"Time taken to process single json: {round(time.time() - start_time, 2)} seconds.")
 
 def prompt_directory_refactorings(directory_path):
+    start_time = time.time()
+    args = init_args()
     for filename in os.listdir(directory_path):
         if filename[-4:] == "json":
-            get_LLM_refactorings_for_file(directory_path + "/" + filename)
+            file_path = directory_path + "/" + filename
+            get_LLM_refactorings_for_file(file_path, args)
+    print(f"Time taken to process directory: {round(time.time() - start_time, 2)} seconds.")
 
 def handle_terminal_input(**args):
     load_dotenv()
@@ -80,11 +133,27 @@ def handle_terminal_input(**args):
     else:
         print("No parameter provided.")
 
+def isSingleFileRefactoring(refactoring):
+    if "beforeRefactoring" in refactoring and "filePath" in refactoring["beforeRefactoring"] and "afterRefactoring" in refactoring and "filePath" in refactoring["afterRefactoring"]:
+        if refactoring["beforeRefactoring"]["filePath"] == refactoring["afterRefactoring"]["filePath"]:
+            return True
+    return False
+
+def init_args():
+    args = {
+        "TPM_available" : int(os.environ.get('OPENAI_TOKEN_LIMIT_PER_MINUTE')),
+        "RPM_available" : int(os.environ.get('OPENAI_REQUEST_LIMIT_PER_MINUTE')),
+    }
+    return args
+
 if __name__ == "__main__":
     load_dotenv(override=True)
     if len(sys.argv) > 1:
         JSON_path = sys.argv[1]
-        get_LLM_refactorings_for_file(JSON_path)
+        if os.path.isdir(JSON_path):
+            prompt_directory_refactorings(JSON_path)
+        else:
+            get_LLM_refactorings_for_file(JSON_path)
     else:
         prompt_directory_refactorings("refactoring-data/refactoring-toy-example")
     
