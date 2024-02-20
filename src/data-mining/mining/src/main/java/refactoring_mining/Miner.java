@@ -258,6 +258,7 @@ public class Miner {
             ExtractSuperclassRefactoring ex = (ExtractSuperclassRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            System.out.println("Left coderange size = " + left.size());
             List<CodeRange> right = ex.rightSide();
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
@@ -759,16 +760,16 @@ public class Miner {
         else if( ref instanceof MoveCodeRefactoring){
             MoveCodeRefactoring ex = (MoveCodeRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
-            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            CodeRange parentCodeRange = left.get(0);
             List<CodeRange> right = ex.rightSide();
-            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            CodeRange newCodeRange = right.get(0);
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         } else if( ref instanceof ReplaceAnonymousWithClassRefactoring){
             ReplaceAnonymousWithClassRefactoring ex = (ReplaceAnonymousWithClassRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
-            CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
+            CodeRange parentCodeRange = left.get(0);
             List<CodeRange> right = ex.rightSide();
-            CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
+            CodeRange newCodeRange = right.get(0);
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         } else if( ref instanceof ParameterizeTestRefactoring){
             ParameterizeTestRefactoring ex = (ParameterizeTestRefactoring) ref;
@@ -795,7 +796,7 @@ public class Miner {
      * @param folderPath The folder path of the repository.
      * @param onlySingleFile A boolean to indicate if ONLY single file refactorings should be saved.
 	 */
-    private void buildPromptContext(Refactoring ref, String refId, String folderPath, Boolean onlySingleFile){
+    private Boolean buildPromptContext(Refactoring ref, String refId, String folderPath, Boolean onlySingleFile, int maxRefactorings){
         JSONObject json = getRefactoringData(ref, refId, folderPath);
         String folder = "refactoring-data/" + folderPath.substring(4);
         if( !Files.exists(Paths.get(folder))){
@@ -804,6 +805,13 @@ public class Miner {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        // Get the number of refactoring jsons in the folder
+        long refactoringCount = HelperTools.getNumberOfFilesInFolder(folder);
+        if( refactoringCount >= maxRefactorings){
+            System.out.println("Reached the maximum number of refactorings for " + folderPath);
+            return false;
         }
 
         if( !onlySingleFile || HelperTools.isSingleFileRefactoring(json)){
@@ -815,7 +823,9 @@ public class Miner {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            return true;
         }
+        return false;
     }
 
     public void generateJsonForAllSingleFileRefactorings(String folderPath){
@@ -828,7 +838,7 @@ public class Miner {
                     for (Refactoring ref : refactorings) {
                         System.out.println(ref.toString());
                         String refId = commitId + "-" + id;
-                        buildPromptContext(ref, refId, folderPath, true);
+                        buildPromptContext(ref, refId, folderPath, true, 100);
                         id++;
                     }
                 }
@@ -886,7 +896,8 @@ public class Miner {
 	 * Add the file content before and after the refactoring to the JSON object and get the LLM refactoring.
      * @param repoFolderPath The path of the repository with the codebase.
 	 */
-    public void populateFileContentOnCommitsAndGetLLMRefactorings(String repoFolderPath) {
+    public void populateJsonsWithFileContentOnCommits(String repoFolderPath) {
+        System.out.println("Populating JSONs with file content in the folder " + repoFolderPath);
         String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
         try {
             try (Stream<Path> JSONFiles = Files.list(Paths.get(refactoringFolderPath))) {
@@ -900,15 +911,15 @@ public class Miner {
                             gitService.checkout(this.repo, commitId);
                             populateJsonWithFileContent(JSONFilePath, repoFolderPath, true);
                             
-                            // Checkout the parent commit and populate the json with beforeReafactoring file content
+                            // Checkout the parent commit and populate the json with beforeRefactoring file content
                             String parentCommit = getParentCommitId(commitId);
                             gitService.checkout(this.repo, parentCommit);
                             populateJsonWithFileContent(JSONFilePath, repoFolderPath, false);
 
-                            // Only get the LLM Refactoring for the Single file refactorings
-                            if (HelperTools.isSingleFileRefactoring(JSONFilePath.toString())){ 
-                                HelperTools.getLLMRefactoring(JSONFilePath.toString());
-                            }
+                            // // Only get the LLM Refactoring for the Single file refactorings
+                            // if (HelperTools.isSingleFileRefactoring(JSONFilePath.toString())){ 
+                            //     HelperTools.getLLMRefactoring(JSONFilePath.toString());
+                            // }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -922,10 +933,21 @@ public class Miner {
     }
 
     /**
+     * Run the LLM prompts script on all the single file refactorings in the folder.
+     * The python script will decide which refactorings are performed in a single file.
+     */
+    public void getLLMRefactorings(String folderPath){
+        System.out.println("Getting LLM Refactorings for the folder " + folderPath);
+        String refactoringFolderPath = "refactoring-data/" + folderPath.substring(4);
+        HelperTools.getLLMRefactoring(refactoringFolderPath);
+    }
+
+    /**
 	 * Traverse the jsons and get the evaluations for all single file refactorings.
      * @param repoFolderPath The path of the repository with the codebase.
 	 */
     public void evaluateSingleFileRefactorings(String repoFolderPath){
+        System.out.println("Evaluating single file refactorings in the folder " + repoFolderPath);
         String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
         RepositoryEvaluator evaluator = new RepositoryEvaluator(repoFolderPath);
         try {

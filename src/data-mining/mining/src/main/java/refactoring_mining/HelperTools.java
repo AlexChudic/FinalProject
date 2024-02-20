@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.Git;
@@ -44,14 +46,18 @@ public class HelperTools {
     }
 
     public static void getLLMRefactoring(String JSONPath){
-        String[] command = {"runModel/bin/python", "src/useGPT.py", JSONPath};
+        String[] command = {"python", "src/useGPT.py", JSONPath};
+        System.out.println("Executing command: " + String.join(" ", command));
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
+            System.out.println("Process started");
             int exitCode = process.waitFor();
-                    
+            System.out.println("Process finished");        
+
             if (exitCode != 0) {
+                System.out.println("Python script execution failed with exit code: " + exitCode);
                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
                 String line;
                 while ((line = errorReader.readLine()) != null) {
@@ -59,6 +65,7 @@ public class HelperTools {
                 }
                 throw new RuntimeException("Python script execution failed with exit code: " + exitCode);
             } else {
+                System.out.println("Python script executed successfully");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -157,6 +164,15 @@ public class HelperTools {
             result += string + "\n";
         }
         return result;
+    }
+
+    public static long getNumberOfFilesInFolder(String folderPath){
+        try (Stream<Path> files = Files.list(Paths.get(folderPath))) {
+            return files.count();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
 }
