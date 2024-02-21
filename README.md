@@ -11,6 +11,19 @@ We will conduct experiments with (novice and experienced) developers to gain ins
 [1] Martin Fowler, Improving the Design of Existing Code. Addison-Wesley, 2019.
 
 ## Setup and Compilation
+### Sonarqube and SonarScanner setup
+1. [Download](https://docs.sonarsource.com/sonarqube/latest/try-out-sonarqube/#installing-a-local-instance-of-sonarqube) and install a local instance of Sonarqube
+2. Run Sonarqube in terminal - `<PATH_TO_SONARQUBE>/bin` 
+3. Log in, and create a new local project
+4. Choose to analyse the project "Locally", generate a token
+5. Add the token, project name, and login details to the project's `.env` file
+6. [Download](https://docs.sonarsource.com/sonarcloud/advanced-setup/ci-based-analysis/sonarscanner-cli/) and install SonarScanner locally
+7. Set the SonarQube envoronment Variable - add these lines to the `~/.zshrc` file
+   - `export SONAR_HOME=<PATH_TO_SONNARSCANNER>/{version}/libexec`
+   - `export SONAR=$SONAR_HOME/bin export PATH=$SONAR:$PATH`
+
+For Mac, it's possible to use [Homebrew](https://techblost.com/how-to-setup-sonarqube-locally-on-mac/) for easier installation process (steps 1-6 are sufficient)
+
 
 ### Running the modules
 It is possible to run submodules on its own from the terminal. Make sure these commands are executed from the root repository folder.
