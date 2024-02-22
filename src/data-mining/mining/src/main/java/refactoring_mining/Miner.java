@@ -950,10 +950,10 @@ public class Miner {
         System.out.println("Evaluating single file refactorings in the folder " + repoFolderPath);
         String refactoringFolderPath = "refactoring-data/" + repoFolderPath.substring(4);
         RepositoryEvaluator evaluator = new RepositoryEvaluator(repoFolderPath);
-        try {
-            try (Stream<Path> JSONFiles = Files.list(Paths.get(refactoringFolderPath))) {
-                                
-                JSONFiles.forEach(JSONFilePath -> {
+        
+        try (Stream<Path> JSONFiles = Files.list(Paths.get(refactoringFolderPath))) {   
+            JSONFiles.forEach(JSONFilePath -> {
+                try { 
                     String file = JSONFilePath.getFileName().toString();
                     if(file.length() > 5 && file.substring(file.length()-5).equals(".json") && 
                         HelperTools.isSingleFileRefactoring(JSONFilePath.toString())){
@@ -962,33 +962,41 @@ public class Miner {
                         String LLMRefactoring = HelperTools.preprocessLLMRefactoring(HelperTools.getFileFromJSON(JSONFilePath.toString(), "LLM_simple"));
                         String beforeRefactoring = HelperTools.getFileFromJSON(JSONFilePath.toString(), "before");
                         String afterRefactoring = HelperTools.getFileFromJSON(JSONFilePath.toString(), "after");
-                        if( changedFilePath != null || LLMRefactoring != null || beforeRefactoring != null || afterRefactoring != null){
-                            String commitId = file.substring(0, 40);
-                            try{ 
-                                // Checkout the parent commit and perform the evaluation
-                                String parentCommit = getParentCommitId(commitId);
-                                HelperTools.checkout(this.repo, this.branch, parentCommit);
-                                
-                                String baseline = evaluator.evaluateFile(changedFilePath);
-                                HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, LLMRefactoring);
-                                String LLM = evaluator.evaluateFile(changedFilePath);
-                                HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, afterRefactoring);
-                                String developer = evaluator.evaluateFile(changedFilePath);
-                                HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, beforeRefactoring);
+                        String evaluation = HelperTools.getFileFromJSON(JSONFilePath.toString(), "isEvaluated");
 
-                                if(baseline != null || LLM != null || developer != null){
-                                    evaluator.processEvaluationResults(baseline, LLM, developer, JSONFilePath.toString());
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                        // Only evaluate the refactorings that have not been evaluated and has all required data
+                        if( evaluation == null && ( changedFilePath != null || LLMRefactoring != null || beforeRefactoring != null || afterRefactoring != null ) ){
+                            String commitId = file.substring(0, 40);
+                            
+                            // Checkout the parent commit and perform the evaluation
+                            String parentCommit = getParentCommitId(commitId);
+                            HelperTools.checkout(this.repo, this.branch, parentCommit);
+                            String baseline = evaluator.evaluateFile(changedFilePath);
+                            
+                            // Evaluate the file using the LLM refactoring
+                            HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, LLMRefactoring);
+                            String LLM = evaluator.evaluateFile(changedFilePath);
+
+                            // Evaluate the file using the developer refactoring
+                            HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, afterRefactoring);
+                            String developer = evaluator.evaluateFile(changedFilePath);
+
+                            // Replace the file with the original content
+                            HelperTools.replaceFile(repoFolderPath+"/"+changedFilePath, beforeRefactoring);
+
+                            // Update the json file with the evaluation results
+                            if(baseline != null || LLM != null || developer != null){
+                                evaluator.processEvaluationResults(baseline, LLM, developer, JSONFilePath.toString());
                             }
                         }
-                    
                     }
-                });
-            }
-
+                } catch (Exception e) {
+                    System.out.println("Error during evaluating json " + JSONFilePath.toString());
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
+            System.out.println("Error getting jsons in repository " + repoFolderPath);
             e.printStackTrace();
         }
     }

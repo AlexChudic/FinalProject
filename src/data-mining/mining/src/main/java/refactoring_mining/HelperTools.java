@@ -102,6 +102,12 @@ public class HelperTools {
                 } else {
                     System.out.println(JSONPath+ " afterRefactoring.file not found in the JSON.");
                 }
+            } else if (file == "isEvaluated"){
+                if (json.has("evaluation")) {
+                    return "Evaluated";
+                } else {
+                    return null;
+                }
             } else {
                 System.out.println("Invalid file type");
             }

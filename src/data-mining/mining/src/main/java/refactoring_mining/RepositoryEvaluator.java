@@ -169,7 +169,7 @@ public class RepositoryEvaluator {
 
             try (FileWriter fileWriter = new FileWriter(JSONFilePath)){
                 fileWriter.write(json.toString());
-                System.out.println("Successfully updated the JSON file with evaluation data.");
+                System.out.println("Successfully updated the JSON file with evaluation data. " + JSONFilePath);
 
             } catch (IOException e) {
                 e.printStackTrace();

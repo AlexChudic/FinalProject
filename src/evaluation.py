@@ -30,6 +30,10 @@ def evaluateCommit( jsonPath, generateLog=False, generateChart=False ):
         table.append([metric, developer_refactoring[metric], LLM_refactoring[metric]])
     table.sort(key=lambda x: x[0])
 
+    evalPath = os.path.dirname(jsonPath) + "/eval/"
+    if not os.path.exists(evalPath):
+        os.makedirs(evalPath)
+
     evalPath = logPath = os.path.dirname(jsonPath) + "/eval/" + os.path.basename(jsonPath)[:-5]
     if generateChart:
         generateBarChart(table, savePath=evalPath + "-barChart.png")
@@ -47,14 +51,20 @@ def evaluateCommit( jsonPath, generateLog=False, generateChart=False ):
 def evaluateRepository( repositoryPath ):
     aggregate_table = []
     table_count = 0
+
+    evalPath = repositoryPath + "/eval/"
+    if not os.path.exists(evalPath):
+        os.makedirs(evalPath)
+
     for filename in os.listdir(repositoryPath):
         if filename[-4:] == "json":
             if hasEvaluationMetrics(repositoryPath + "/" + filename):
                 singleRefactoringMetrics = evaluateCommit(repositoryPath + "/" + filename, True, True)
                 aggregate_table = addToTable(aggregate_table, singleRefactoringMetrics)
                 table_count += 1
+
     headers = ["Metric", "Developer Refactoring", "LLM Refactoring"]
-    average_table = [[item[0], item[1]/table_count, item[2]/table_count] for item in aggregate_table]
+    average_table = [[item[0], round(item[1]/table_count,2), round(item[2]/table_count,2)] for item in aggregate_table]
     generateEvalLog(average_table, repositoryPath + "/eval/average-eval.txt")
     generateBarChart(average_table, savePath=repositoryPath + "/eval/average-barChart.png")
     print(tabulate(average_table, headers=headers, tablefmt="grid"))
@@ -89,8 +99,8 @@ def generateEvalLog(table, logPath, saveRefactorings=False, data=None):
 
 def generateBarChart(data, savePath=None):
     metrics = [item[0] for item in data]
-    values1 = [item[1] for item in data]
-    values2 = [item[2] for item in data]
+    values1 = [round(item[1],2) for item in data]
+    values2 = [round(item[2],2) for item in data]
 
     x = range(len(metrics))
     width = 0.35
