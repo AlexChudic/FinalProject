@@ -66,7 +66,7 @@ def evaluateRepository( repositoryPath ):
     headers = ["Metric", "Developer Refactoring", "LLM Refactoring"]
     average_table = [[item[0], round(item[1]/table_count,2), round(item[2]/table_count,2)] for item in aggregate_table]
     generateEvalLog(average_table, repositoryPath + "/eval/average-eval.txt")
-    generateBarChart(average_table, savePath=repositoryPath + "/eval/average-barChart.png")
+    generateBarChart(average_table, savePath=repositoryPath + "/eval/average-barChart" + os.path.basename(repositoryPath) + ".png")
     print(tabulate(average_table, headers=headers, tablefmt="grid"))
 
 def addToTable(table, singleRefactoringMetrics):
@@ -110,8 +110,8 @@ def generateBarChart(data, savePath=None):
     bar2 = ax.bar([i + width for i in x], values2, width, label='Developer Refactoring')
 
     # Add labels, title, and legend
-    ax.set_ylabel('Values')
-    ax.set_title('Metrics Comparison')
+    ax.set_ylabel('Difference in eval metrics')
+    ax.set_title('Change in eval metrics - before and after refactoring')
     ax.set_xticks([i + width / 2 for i in x])
     ax.set_xticklabels(metrics, rotation=45, ha='right')
     ax.legend()

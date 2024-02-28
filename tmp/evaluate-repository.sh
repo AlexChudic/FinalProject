@@ -16,7 +16,7 @@ current_directory=$(pwd)
 cd "$directory" || exit 1
 
 sonar_scanner_output=$(sonar-scanner \
-  -Dsonar.projectKey=RefactorAssessment \
+  -Dsonar.projectKey=RefactoringAssessment \
   -Dsonar.sources=. \
   -Dsonar.host.url=http://localhost:9000 \
   -Dsonar.token=$sonar_token \

@@ -28,6 +28,7 @@ MANIFEST
 tmp/*
 !tmp/evaluate-repository.sh
 refactoring-data/
+data/
 runModel/
 .vscode/
 .DS_Store
