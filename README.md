@@ -10,6 +10,9 @@ We will conduct experiments with (novice and experienced) developers to gain ins
 ##### References:
 [1] Martin Fowler, Improving the Design of Existing Code. Addison-Wesley, 2019.
 
+## Dissertation
+The link to read the dissertation: https://www.overleaf.com/read/vnkqzdphxfmv#afd5e7
+
 ## Setup and Compilation
 ### Sonarqube and SonarScanner setup
 1. [Download](https://docs.sonarsource.com/sonarqube/latest/try-out-sonarqube/#installing-a-local-instance-of-sonarqube) and install a local instance of Sonarqube
