@@ -183,4 +183,16 @@
   2. Estimate the costs of running it on the pipeline on 62 repos
   3. Run the pipeline on all of the sampled repos
 
-
+## Meeting 14 - 1.3.2024
+- Limitations of my study
+    - The assessment of the correct functionality of the project is entirely dependent on Sonarqube - the project is not built and the test suite is not run
+    - The comparison between the developer and LLM refactoring doesn't make too much sense → developer only aims to fix one problem worth refactoring at a time (if following correct git practices commiting after every…)
+- What to mention in the dissertation
+    - Background section should map the landscape of the topic - don’t have to evaluate the quality of the papers etc.
+    - Include the RefactoringMiner and the refactoringTypes I cover
+    - Also mention why every section of the background is important, and what the reader should take away
+- Focus on going forward
+    - Writing the dissertation!!!
+    - Make sure to compare the LLM proposed refactoring type with the refactoring type performed by the developer - what RefactoringMiner detected
+    - Run the pipeline on as many repositories as possible
+    - Change the structure of the table displaying refactoring metrics
