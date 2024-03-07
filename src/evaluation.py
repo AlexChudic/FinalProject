@@ -2,6 +2,7 @@ import os
 import json
 import sys
 import matplotlib.pyplot as plt
+from Levenshtein import distance
 from tabulate import tabulate
 from dotenv import load_dotenv
 from matplotlib.table import Table
@@ -16,6 +17,19 @@ def evaluateCommit( jsonPath, generateLog=False, generateChart=False ):
     baseline_measures = data["evaluation"]["baseline"]["component"]["measures"]
     LLM_measures = data["evaluation"]["LLM"]["component"]["measures"]
     
+    pretty_evaluation_metrics = {
+        'vulnerabilities': "Vulnerabilities", 
+        'sqale_index': "Technical Debt Index", 
+        'bugs': "Bugs", 
+        'comment_lines': "Comment Lines", 
+        'cognitive_complexity': "Cognitive Complexity",
+        'code_smells': "Code Smells",
+        'complexity': "Cyclomatic Complexity",
+        'lines': "Lines of Code",
+        'ncloc': "Non Comment Lines of Code",
+        'levenstein_distance': 'Levenshtein Distance',
+    }
+
     # Compute evaluation metrics for developer_refactoring and LLM_refactoring
     baseline = {measure["metric"]: int(measure["value"]) for measure in baseline_measures if "value" in measure }
     developer_metrics = {measure["metric"]: int(measure["value"]) for measure in developer_measures if "value" in measure}
@@ -23,11 +37,22 @@ def evaluateCommit( jsonPath, generateLog=False, generateChart=False ):
     LLM_metrics = {measure["metric"]: int(measure["value"]) for measure in LLM_measures if "value" in measure}
     LLM_refactoring = {metric: LLM_metrics[metric] - baseline.get(metric, 0) for metric in LLM_metrics}
 
+    # Compute the edit distance between the code before and after refactoring
+    beforeRefactoring = "\n".join(data["beforeRefactoring"]["file"])
+    developerRefactoring = "\n".join(data["afterRefactoring"]["file"])
+    LLMRefactoring = data["LLMRefactoring"]["simplePrompt"]
+
+    baseline["levenstein_distance"] = 0
+    developer_metrics["levenstein_distance"] = distance(beforeRefactoring, developerRefactoring)
+    developer_refactoring["levenstein_distance"] = distance(beforeRefactoring, developerRefactoring)
+    LLM_metrics["levenstein_distance"] = distance(beforeRefactoring, LLMRefactoring)
+    LLM_refactoring["levenstein_distance"] = distance(beforeRefactoring, LLMRefactoring)
+
     # Display metrics in table format
-    headers = ["Metric", "Developer Refactoring", "LLM Refactoring"]
+    headers = ["Metric", "Baseline", "Developer Ref", "DevRef Change", "LLM Ref", "LLMRef Change"]
     table = []
     for metric in developer_refactoring:
-        table.append([metric, developer_refactoring[metric], LLM_refactoring[metric]])
+        table.append([pretty_evaluation_metrics[metric], baseline[metric], developer_metrics[metric], developer_refactoring[metric], LLM_metrics[metric], LLM_refactoring[metric]])
     table.sort(key=lambda x: x[0])
 
     evalPath = os.path.dirname(jsonPath) + "/eval/"
@@ -59,11 +84,11 @@ def evaluateRepository( repositoryPath ):
     for filename in os.listdir(repositoryPath):
         if filename[-4:] == "json":
             if hasEvaluationMetrics(repositoryPath + "/" + filename):
-                singleRefactoringMetrics = evaluateCommit(repositoryPath + "/" + filename, True, True)
+                singleRefactoringMetrics = evaluateCommit(repositoryPath + "/" + filename, True)
                 aggregate_table = addToTable(aggregate_table, singleRefactoringMetrics)
                 table_count += 1
 
-    headers = ["Metric", "Developer Refactoring", "LLM Refactoring"]
+    headers = ["Metric", "Average Developer Ref Change", "Average LLM Ref Change"]
     average_table = [[item[0], round(item[1]/table_count,2), round(item[2]/table_count,2)] for item in aggregate_table]
     generateEvalLog(average_table, repositoryPath + "/eval/average-eval.txt")
     generateBarChart(average_table, savePath=repositoryPath + "/eval/average-barChart" + os.path.basename(repositoryPath) + ".png")
@@ -74,13 +99,13 @@ def addToTable(table, singleRefactoringMetrics):
         table = singleRefactoringMetrics
     else:
         for i in range(len(table)):
-            table[i][1] += singleRefactoringMetrics[i][1]
-            table[i][2] += singleRefactoringMetrics[i][2]
+            table[i][1] += singleRefactoringMetrics[i][3]
+            table[i][2] += singleRefactoringMetrics[i][5]
     return table 
 
 def generateEvalLog(table, logPath, saveRefactorings=False, data=None):
     with open(logPath, "w") as log_file:
-        log_file.write(tabulate(table, headers=["Metric", "Developer Refactoring", "LLM Refactoring"], tablefmt="grid"))
+        log_file.write(tabulate(table, headers=["Metric", "Baseline", "Developer Ref", "DevRef Change", "LLM Ref", "LLMRef Change"], tablefmt="grid"))
         log_file.write("\n\n")
 
         if saveRefactorings:
