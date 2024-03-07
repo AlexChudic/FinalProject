@@ -1,7 +1,9 @@
 package refactoring_mining;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.refactoringminer.api.GitHistoryRefactoringMiner;
@@ -468,7 +470,7 @@ public class Miner {
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         } else if( ref instanceof ModifyAttributeAnnotationRefactoring){
-            RemoveAttributeAnnotationRefactoring ex = (RemoveAttributeAnnotationRefactoring) ref;
+            ModifyAttributeAnnotationRefactoring ex = (ModifyAttributeAnnotationRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
@@ -796,7 +798,7 @@ public class Miner {
      * @param folderPath The folder path of the repository.
      * @param onlySingleFile A boolean to indicate if ONLY single file refactorings should be saved.
 	 */
-    private Boolean buildPromptContext(Refactoring ref, String refId, String folderPath, Boolean onlySingleFile, int maxRefactorings){
+    private Boolean buildPromptContext(Refactoring ref, String refId, String folderPath, Map<String,Integer> filePaths, Boolean onlySingleFile, int maxRefactorings){
         JSONObject json = getRefactoringData(ref, refId, folderPath);
         String folder = "refactoring-data/" + folderPath.substring(4);
         if( !Files.exists(Paths.get(folder))){
@@ -814,6 +816,13 @@ public class Miner {
             return false;
         }
 
+        // Check if the file refactoring json is not already saved for this commit
+        String changedFilePath = HelperTools.getChangedFilePath(json);
+        if(filePaths.containsKey(changedFilePath)){
+            System.out.println("Refactoring for " + changedFilePath + " already saved for this commit");
+            return false;
+        }
+
         if( !onlySingleFile || HelperTools.isSingleFileRefactoring(json)){
             String filePath = "refactoring-data/" + folderPath.substring(4) + "/" + refId + ".json";
 
@@ -823,6 +832,7 @@ public class Miner {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            filePaths.put(changedFilePath, 1);
             return true;
         }
         return false;
@@ -835,10 +845,11 @@ public class Miner {
                 public void handle(String commitId, List<Refactoring> refactorings) {
                     System.out.println("Refactorings at " + commitId);
                     int id = 0;
+                    Map<String, Integer> filePaths = new HashMap<>();
                     for (Refactoring ref : refactorings) {
                         System.out.println(ref.toString());
                         String refId = commitId + "-" + id;
-                        buildPromptContext(ref, refId, folderPath, true, 100);
+                        buildPromptContext(ref, refId, folderPath, filePaths, true, 100);
                         id++;
                     }
                 }

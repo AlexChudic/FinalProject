@@ -121,15 +121,19 @@ public class HelperTools {
         try {
             String jsonString = new String(Files.readAllBytes(Paths.get(JSONPath)));
             JSONObject json = new JSONObject(jsonString);
-            // Get the value of before
-            if (json.has("beforeRefactoring") && json.getJSONObject("beforeRefactoring").has("filePath")) {
-                return json.getJSONObject("beforeRefactoring").getString("filePath");
-            } else {
-                System.out.println(JSONPath + " changed file path not found in the JSON.");
-            }
+            return getChangedFilePath(json);
         } catch (Exception e) {
             System.out.println("Error reading JSON file: " + JSONPath);
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getChangedFilePath(JSONObject json){
+        if (json.has("beforeRefactoring") && json.getJSONObject("beforeRefactoring").has("filePath")) {
+            return json.getJSONObject("beforeRefactoring").getString("filePath");
+        } else {
+            System.out.println("Changed file path not found in the JSON.");
         }
         return null;
     }
