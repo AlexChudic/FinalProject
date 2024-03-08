@@ -812,14 +812,14 @@ public class Miner {
         // Get the number of refactoring jsons in the folder
         long refactoringCount = HelperTools.getNumberOfFilesInFolder(folder);
         if( refactoringCount >= maxRefactorings){
-            System.out.println("Reached the maximum number of refactorings for " + folderPath);
+            System.out.println("FINISHED - Reached the maximum number of refactorings for " + folderPath);
             return false;
         }
 
         // Check if the file refactoring json is not already saved for this commit
         String changedFilePath = HelperTools.getChangedFilePath(json);
         if(filePaths.containsKey(changedFilePath)){
-            System.out.println("Refactoring for " + changedFilePath + " already saved for this commit");
+            System.out.println("SKIPPING - Refactoring for " + changedFilePath + " already saved for this commit");
             return false;
         }
 

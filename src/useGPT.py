@@ -10,15 +10,19 @@ import tiktoken
 def join_file(file_lines):
     return '\n'.join(file_lines)
 
-def construct_simple_prompt(file, changes_start=None, changes_end=None):
-    if changes_end:
-        return "Refactor the following class between the lines " + str(changes_start) + " and " + str(changes_end) + ":\n" + file
-    else:
-        # Good to show if the LLM can decide on the type of refactoring
-        # Can they maintain the same functionality? and code quality
-        return "Refactor the following class:\n" + file
-    
-    # TODO: add prompt which adds the refactoring miner message
+def construct_simple_prompt(file, type="simple"):
+    msg = []
+    if type == "simple":
+        msg = [
+            {"role": "system", "content": "You are a code quality analyst. Pay close attention to the mainainability, code smells, and complexity. Your goal is to optimize the code without changing the functionality. No explanations are needed."},
+            {"role": "user", "content": "Refactor the following class:\n" + file }
+        ]
+    elif type == "getTypeOfRefactoringPrompt":
+        msg = [
+            {"role": "system", "content": "You are a code quality analyst. Pay close attention to the mainainability, code smells, and complexity. Your goal is to decide if refactoring is required and if so, what type of refactoring is needed. No explanations are needed."},
+            {"role": "user", "content": "Does this class require refactoring? Only answer 'YES, refactoring required=<<<REFACTORING_TYPE>>>' or 'NO'. For the answer 'YES' replace the <<<REFACTORING_TYPE>>> with the refactoring type that is required. No explanation is needed.:\n\n" + file },
+        ]
+    return msg
     
 def try_prompting(prompt, args, count=0):
     try:
@@ -29,18 +33,19 @@ def try_prompting(prompt, args, count=0):
         time.sleep(10)
         return try_prompting(prompt, args, count+1) if count <= 6 else None
 
-def ask_chatGPT( prompt, args ):
+def ask_chatGPT( msg, args ):
     client = OpenAI()
     print("Asking GPT-3...")
     #print(prompt)
 
     # get the number of tokens in the message
-    msg = [
-        {"role": "system", "content": "You are a code quality analyst. Pay close attention to the readability, code smells, and cognitive complexity. Your goal is to optimize the code without changing the functionality. No explanations are needed."},
-        {"role": "user", "content": prompt }
-    ]
     num_tokens = num_tokens_in_string(" ".join(item["content"] for item in msg))
     print(f"Number of tokens in the message: {num_tokens}")
+
+    # return none if the number of tokens in the message exceeds the limit of 16370
+    if( num_tokens > 16370 ):
+        print("Error: The number of tokens in the message exceeds the limit of 16370.")
+        return None
     
     # only run the request if the number of remaning tokens is at least 2.5 times the number of tokens in the message
     if args["TPM_available"] < num_tokens*2.5:
@@ -61,9 +66,15 @@ def ask_chatGPT( prompt, args ):
     # update the number of remaining tokens and requests
     if( raw_response.status_code == 200 ):
         args["TPM_available"] = int(raw_response.headers['x-ratelimit-remaining-tokens'])
-        args["TPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-tokens'][:-1])
         args["RPM_available"] = int(raw_response.headers['x-ratelimit-remaining-requests'])
-        args["RPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-requests'][:-1])
+        if(raw_response.headers['x-ratelimit-reset-tokens'][-2:]== "ms"):
+            args["TPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-tokens'][:-2])
+        else:
+            args["TPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-tokens'][:-1])
+        if(raw_response.headers['x-ratelimit-reset-requests'][-2:]== "ms"):
+            args["RPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-requests'][:-2])
+        else:
+            args["RPM_resetTime"] = float(raw_response.headers['x-ratelimit-reset-requests'][:-1])
     else:
         print(f"Error: {response.error.message}")
         print(response)
@@ -91,7 +102,10 @@ def get_LLM_refactorings_for_file(JSON_path, args=None):
     if args is None:
         args = init_args()
     if refactoring is not None and isSingleFileRefactoring(refactoring):
-        if "beforeRefactoring" in refactoring and "file" in refactoring["beforeRefactoring"]:
+        if 'LLMRefactoringGenerated' in refactoring and refactoring['LLMRefactoringGenerated'] == True:
+            print(f"LLM Refactoring already generated for {JSON_path}.")
+            return
+        elif "beforeRefactoring" in refactoring and "file" in refactoring["beforeRefactoring"]:
             print(f"Processing the json file using GPT-3.5-turbo-1106: {JSON_path} ")
             prompt0 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]), "getTypeOfRefactoringPrompt")
             LLM_answer = try_prompting(prompt0, args)
@@ -101,11 +115,6 @@ def get_LLM_refactorings_for_file(JSON_path, args=None):
             prompt1 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]))
             LLM_answer = try_prompting(prompt1, args)
             refactoring['LLMRefactoring']['simplePrompt'] = LLM_answer
-
-            if "startLine" in refactoring["beforeRefactoring"] and "endLine" in refactoring["beforeRefactoring"]:
-                prompt2 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]), refactoring["beforeRefactoring"]["startLine"], refactoring["beforeRefactoring"]["endLine"])
-                LLM_answer = try_prompting(prompt2, args)
-                refactoring['LLMRefactoring']['simplePromptWithColumns'] = LLM_answer
 
             refactoring['LLMRefactoringGenerated'] = True
             with open(JSON_path, 'w') as json_file:
