@@ -14,13 +14,13 @@ def construct_simple_prompt(file, type="simple"):
     msg = []
     if type == "simple":
         msg = [
-            {"role": "system", "content": "You are a code quality analyst. Pay close attention to the mainainability, code smells, and complexity. Your goal is to optimize the code without changing the functionality. No explanations are needed."},
+            {"role": "system", "content": "You are a code quality analyst. Pay close attention to the maintainability, code smells, and complexity. Your goal is to optimize the code without changing the functionality. No explanations are needed."},
             {"role": "user", "content": "Refactor the following class:\n" + file }
         ]
     elif type == "getTypeOfRefactoringPrompt":
         msg = [
-            {"role": "system", "content": "You are a code quality analyst. Pay close attention to the mainainability, code smells, and complexity. Your goal is to decide if refactoring is required and if so, what type of refactoring is needed. No explanations are needed."},
-            {"role": "user", "content": "Does this class require refactoring? Only answer 'YES, refactoring required=<<<REFACTORING_TYPE>>>' or 'NO'. For the answer 'YES' replace the <<<REFACTORING_TYPE>>> with the refactoring type that is required. No explanation is needed.:\n\n" + file },
+            {"role": "system", "content": "You are a code quality analyst. Pay close attention to the maintainability, code smells, and complexity. Your goal is to decide if refactoring is required and if so, what type of refactoring is needed. No explanations are needed."},
+            {"role": "user", "content": "Does this class require refactoring? Only answer 'YES, refactoring required=<<<REFACTORING_TYPES>>>' or 'NO'. For the answer 'YES' replace the <<<REFACTORING_TYPES>>> with the refactoring types required separated by a semi-colon. No explanation is needed.:\n\n" + file },
         ]
     return msg
     
@@ -57,7 +57,7 @@ def ask_chatGPT( msg, args ):
         time.sleep(args["RPM_resetTime"])
 
     raw_response = client.chat.completions.with_raw_response.create(
-        model="gpt-3.5-turbo-1106",
+        model="gpt-3.5-turbo-0125",
         messages=msg,
         temperature=0.2, # use 0.2 for more consistent answers
     )
@@ -89,12 +89,17 @@ def num_tokens_in_string(string) -> int:
     return num_tokens
 
 def JSON_to_dataFrame(JSON_path):
-    if os.path.isfile(JSON_path) and JSON_path[-4:] == "json":
-        with open(JSON_path) as f:
-            data = json.load(f)
-        return data
-    else:
+    try :
+        if os.path.isfile(JSON_path) and JSON_path[-4:] == "json":
+            with open(JSON_path) as f:
+                data = json.load(f)
+            return data
+        else:
+            return None
+    except Exception as e:
+        print(f"Error: {e}")
         return None
+
 
 def get_LLM_refactorings_for_file(JSON_path, args=None):
     start_time = time.time()
@@ -106,7 +111,7 @@ def get_LLM_refactorings_for_file(JSON_path, args=None):
             print(f"LLM Refactoring already generated for {JSON_path}.")
             return
         elif "beforeRefactoring" in refactoring and "file" in refactoring["beforeRefactoring"]:
-            print(f"Processing the json file using GPT-3.5-turbo-1106: {JSON_path} ")
+            print(f"Processing the json file using gpt-3.5-turbo-0125: {JSON_path} ")
             prompt0 = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]), "getTypeOfRefactoringPrompt")
             LLM_answer = try_prompting(prompt0, args)
             refactoring['LLMRefactoring'] = {}
@@ -164,5 +169,10 @@ if __name__ == "__main__":
         else:
             get_LLM_refactorings_for_file(JSON_path)
     else:
-        prompt_directory_refactorings("refactoring-data/refactoring-toy-example")
+        # prompt_directory_refactorings("refactoring-data/refactoring-toy-example")
+        for repoName in os.listdir("refactoring-data"):
+            repo_path = "refactoring-data/" + repoName
+            if os.path.isdir(repo_path):
+                print("PROMPTING DIRECTORY: " + repo_path )
+                prompt_directory_refactorings(repo_path)
     

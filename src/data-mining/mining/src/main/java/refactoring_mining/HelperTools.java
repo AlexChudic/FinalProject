@@ -108,6 +108,12 @@ public class HelperTools {
                 } else {
                     return null;
                 }
+            } else if (file == "simplePromptTooLong"){
+                if (json.has("LLMRefactoring") && json.getJSONObject("LLMRefactoring").has("simplePromptTooLong")) {
+                    return "simplePromptTooLong";
+                } else {
+                    return null;
+                }
             } else {
                 System.out.println("Invalid file type");
             }
@@ -183,6 +189,18 @@ public class HelperTools {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public static void createFolder(String folderPath){
+        try {
+            if(Files.exists(Paths.get(folderPath)) && Files.isDirectory(Paths.get(folderPath))){
+                return;
+            } else {
+                Files.createDirectories(Paths.get(folderPath));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

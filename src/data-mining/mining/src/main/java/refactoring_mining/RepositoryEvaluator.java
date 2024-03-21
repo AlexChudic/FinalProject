@@ -85,6 +85,9 @@ public class RepositoryEvaluator {
             analysisTaskDetails = makeGetRequest(analysisUrl);
             analysisTaskDetailsJson = new JSONObject(analysisTaskDetails);
             analysisState = analysisTaskDetailsJson.getJSONObject("task").getString("status");
+            if (analysisState.equals("FAILED")){
+                System.out.println(analysisTaskDetailsJson);
+            }
         }
         System.out.println("Analysis State: " + analysisState);
     }
@@ -176,6 +179,27 @@ public class RepositoryEvaluator {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void processEvaluationFailure(Exception e, String JSONFilePath){
+        try {
+            // Save the exception stacktrace into the json
+            String jsonString = new String(Files.readAllBytes(Paths.get(JSONFilePath)));
+            JSONObject json = new JSONObject(jsonString);
+            JSONObject evaluation = new JSONObject();
+            evaluation.put("error", e.getMessage());
+            json.put("evaluation", evaluation);
+
+            try (FileWriter fileWriter = new FileWriter(JSONFilePath)){
+                fileWriter.write(json.toString());
+                System.out.println("Successfully updated the JSON file with ERROR evaluation data. " + JSONFilePath);
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 }

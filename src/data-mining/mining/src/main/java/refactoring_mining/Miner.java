@@ -715,7 +715,7 @@ public class Miner {
             CodeRange newCodeRange = right.get(0); // There might be multiple codeRanges!!!
             json = createJSONForRefactoring(ref, refId, parentCodeRange, newCodeRange, folderPath);
         } else if( ref instanceof ReplacePipelineWithLoopRefactoring){
-            InlineAttributeRefactoring ex = (InlineAttributeRefactoring) ref;
+            ReplacePipelineWithLoopRefactoring ex = (ReplacePipelineWithLoopRefactoring) ref;
             List<CodeRange> left = ex.leftSide(); 
             CodeRange parentCodeRange = left.get(0); // There might be multiple codeRanges!!!
             List<CodeRange> right = ex.rightSide();
@@ -823,8 +823,17 @@ public class Miner {
             return false;
         }
 
+        
+
+
         if( !onlySingleFile || HelperTools.isSingleFileRefactoring(json)){
             String filePath = "refactoring-data/" + folderPath.substring(4) + "/" + refId + ".json";
+
+            // Check if a file with the same name doesn't already exist
+            if(Files.exists(Paths.get(filePath))){
+                System.out.println("EXISTS - The refactoring JSON already exists for this refactoring at: " + filePath);
+                return false;
+            }
 
             try (FileWriter fileWriter = new FileWriter(filePath)){
                 fileWriter.write(json.toString());
@@ -904,7 +913,7 @@ public class Miner {
     }
 
     /**
-	 * Add the file content before and after the refactoring to the JSON object and get the LLM refactoring.
+	 * Add the file content before and after the refactoring to the JSON object
      * @param repoFolderPath The path of the repository with the codebase.
 	 */
     public void populateJsonsWithFileContentOnCommits(String repoFolderPath) {
@@ -937,7 +946,6 @@ public class Miner {
                     }
                 });
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -970,13 +978,16 @@ public class Miner {
                         HelperTools.isSingleFileRefactoring(JSONFilePath.toString())){
 
                         String changedFilePath = HelperTools.getChangedFilePath(JSONFilePath.toString());
-                        String LLMRefactoring = HelperTools.preprocessLLMRefactoring(HelperTools.getFileFromJSON(JSONFilePath.toString(), "LLM_simple"));
+                        String LLMRefactoring = null;
+                        if( (HelperTools.getFileFromJSON(JSONFilePath.toString(), "LLM_simple") != null) && ( HelperTools.getFileFromJSON(JSONFilePath.toString(), "simplePromptTooLong") != "simplePromptTooLong") ){
+                            LLMRefactoring = HelperTools.preprocessLLMRefactoring(HelperTools.getFileFromJSON(JSONFilePath.toString(), "LLM_simple"));
+                        }
                         String beforeRefactoring = HelperTools.getFileFromJSON(JSONFilePath.toString(), "before");
                         String afterRefactoring = HelperTools.getFileFromJSON(JSONFilePath.toString(), "after");
                         String evaluation = HelperTools.getFileFromJSON(JSONFilePath.toString(), "isEvaluated");
 
                         // Only evaluate the refactorings that have not been evaluated and has all required data
-                        if( evaluation == null && ( changedFilePath != null || LLMRefactoring != null || beforeRefactoring != null || afterRefactoring != null ) ){
+                        if( ( evaluation == null ) && ( changedFilePath != null ) && ( LLMRefactoring != null ) && ( beforeRefactoring != null ) && ( afterRefactoring != null ) ){
                             String commitId = file.substring(0, 40);
                             
                             // Checkout the parent commit and perform the evaluation
@@ -1003,6 +1014,7 @@ public class Miner {
                     }
                 } catch (Exception e) {
                     System.out.println("Error during evaluating json " + JSONFilePath.toString());
+                    evaluator.processEvaluationFailure(e, JSONFilePath.toString());
                     e.printStackTrace();
                 }
             });
