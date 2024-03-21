@@ -52,7 +52,11 @@ def evaluateCommit( jsonPath, generateLog=False, generateChart=False ):
     headers = ["Metric", "Baseline", "Developer Ref", "DevRef Change", "LLM Ref", "LLMRef Change"]
     table = []
     for metric in developer_refactoring:
-        table.append([pretty_evaluation_metrics[metric], baseline[metric], developer_metrics[metric], developer_refactoring[metric], LLM_metrics[metric], LLM_refactoring[metric]])
+        if metric in baseline and metric in developer_metrics and metric in developer_refactoring and metric in LLM_metrics and metric in LLM_refactoring:
+            table.append([pretty_evaluation_metrics[metric], baseline[metric], developer_metrics[metric], developer_refactoring[metric], LLM_metrics[metric], LLM_refactoring[metric]])
+        else:
+            print(f"Metric {metric} not found in all measures.")
+            return None
     table.sort(key=lambda x: x[0])
 
     evalPath = os.path.dirname(jsonPath) + "/eval/"
@@ -69,7 +73,8 @@ def evaluateCommit( jsonPath, generateLog=False, generateChart=False ):
         generateEvalLog(table, logPath, True, data)
         
     else:
-        print(tabulate(table, headers=headers, tablefmt="grid"))
+        #print(tabulate(table, headers=headers, tablefmt="grid"))
+        pass
     
     return table
     
@@ -85,14 +90,33 @@ def evaluateRepository( repositoryPath ):
         if filename[-4:] == "json":
             if hasEvaluationMetrics(repositoryPath + "/" + filename):
                 singleRefactoringMetrics = evaluateCommit(repositoryPath + "/" + filename, True)
-                aggregate_table = addToTable(aggregate_table, singleRefactoringMetrics)
-                table_count += 1
+                if singleRefactoringMetrics:
+                    aggregate_table = addToTable(aggregate_table, singleRefactoringMetrics)
+                    table_count += 1
 
     headers = ["Metric", "Average Developer Ref Change", "Average LLM Ref Change"]
     average_table = [[item[0], round(item[1]/table_count,2), round(item[2]/table_count,2)] for item in aggregate_table]
     generateEvalLog(average_table, repositoryPath + "/eval/average-eval.txt")
     generateBarChart(average_table, savePath=repositoryPath + "/eval/average-barChart" + os.path.basename(repositoryPath) + ".png")
     print(tabulate(average_table, headers=headers, tablefmt="grid"))
+
+def getRepositoryEvaluationMetrics( repositoryPath ):
+    aggregate_table = []
+    table_count = 0
+
+    evalPath = repositoryPath + "/eval/"
+    if not os.path.exists(evalPath):
+        os.makedirs(evalPath)
+
+    for filename in os.listdir(repositoryPath):
+        if filename[-4:] == "json":
+            if hasEvaluationMetrics(repositoryPath + "/" + filename):
+                singleRefactoringMetrics = evaluateCommit(repositoryPath + "/" + filename, False, False)
+                if singleRefactoringMetrics:
+                    aggregate_table = addToTable(aggregate_table, singleRefactoringMetrics)
+                    table_count += 1
+
+    return aggregate_table, table_count
 
 def addToTable(table, singleRefactoringMetrics):
     if len(table) == 0:
@@ -149,10 +173,39 @@ def generateBarChart(data, savePath=None):
         plt.show()
 
 def hasEvaluationMetrics(jsonPath):
-    with open(jsonPath) as f:
-        data = json.load(f)
-    return True if "evaluation" in data else False
-        
+    try:
+        with open(jsonPath) as f:
+            data = json.load(f)
+        if "evaluation" in data and "developer" in data["evaluation"] and "LLM" in data["evaluation"] and "baseline" in data["evaluation"]:
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Error reading file: {jsonPath}")
+        print(f"Error: {e}")
+        return False
+
+
+def evaluateAllRepositories():
+    eval_table = []
+    entry_count = 0
+
+    for filename in os.listdir("refactoring-data/"):
+        if os.path.isdir("refactoring-data/" + filename):
+            print("Evaluating repository:", filename)
+            aggregate_table, ref_count = getRepositoryEvaluationMetrics("refactoring-data/" + filename)
+            # print(ref_count)
+            # print(tabulate(aggregate_table, headers=["Metric", "Baseline", "Developer Ref", "DevRef Change", "LLM Ref", "LLMRef Change"], tablefmt="grid"))
+            if ref_count > 0:
+                eval_table = addToTable(eval_table, aggregate_table)
+            entry_count += ref_count
+
+    headers = ["Metric", "Average Developer Ref Change", "Average LLM Ref Change"]
+    average_table = [[item[0], round(item[1]/entry_count,2), round(item[2]/entry_count,2)] for item in aggregate_table]
+    generateEvalLog(average_table, "data/evaluation/average-eval.txt")
+    generateBarChart(average_table, savePath="data/evaluation/average-barChart.png")
+    print(tabulate(average_table, headers=headers, tablefmt="grid"))
+
 
 if __name__ == "__main__":
     load_dotenv(override=True)
@@ -160,4 +213,4 @@ if __name__ == "__main__":
         JSON_path = sys.argv[1]
         evaluateRepository(JSON_path)
     else:
-        evaluateCommit("refactoring-data/refactoring-toy-example/a5a7f852e45c7cadc8d1524bd4d14a1e39785aa5-0.json", True, True)
+        evaluateAllRepositories()
