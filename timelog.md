@@ -318,3 +318,139 @@
 ### 14 February 2024
 * *2 hours* Including all of the refactoring types in the evaluation
 
+### 15 February 2024
+* *2 hours* Writing the background section of the dissertation
+
+### 16 February 2024
+* *5 hours* Writing the background section of the dissertation
+
+### 18 February 2024
+* *3 hours* Writing the background section of the dissertation
+
+## Week 22
+### 20 February 2024
+* *4 hours* Fixing the bugs and prompting the LLM
+
+### 21 February 2024
+* *1 hour* Working on the dissertation
+* *2 hours* Fixing bugs in the code
+
+### 22 February 2024
+* *4 hours* Evaluating the code quality metrics before and after refactoring
+* *6 hours* Working on the dissertation
+
+### 23 February 2024
+* *3 hours* Working on the background section
+
+### 25 February 2024
+* *3 hours* Working on the dissertation
+
+## Week 23
+### 26 February 2024
+* *2 hours* Running the pipeline
+* *4 hours* Working on background
+
+### 28 February 2024
+* *8 hours* Working on the background section of the dissertation
+
+### 29 February 2024
+* *4 hours* Working on the dissertation
+
+### 1 March 2024
+* *4 hours* Finishing the background section of the dissertation
+* *1 hour* Supervisor meeting
+* *2 hours* Working on the figures for the analysis
+
+### 2 March 2024
+* *4 hours* Working on the dissertation
+
+## Week 24
+### 4 March 2024
+* *4 hours* Working on the dissertation
+
+### 5 March 2024
+* *3 hours* Working on the dissertation
+
+### 6 March 2024
+* *4 hours* Adjusting and running the pipeline
+* *2 hours* Working on dissertation
+
+### 8 March 2024
+* *2 hours* Working on the dissertation
+* *0.5 hours* Supervisor meeting
+* *2 hours* Adjusting the tables for the dissertation
+* *4 hours* Writing the dissertation
+
+### 9 March 2024
+* *6 hours* Working on the dissertation
+* *3 hours* Making changes to the pipeline and running it
+
+## Week 25
+### 11 March 2024
+* *1 hour* Running the pipeline
+* *4 hours* Working on the dissertation
+
+### 12 March 2024
+* *1 hour* Running the pipeline
+* *32 hours* Working on the dissertation
+
+### 13 March 2024
+* *1 hour* Running the pipeline
+* *5 hours* Working on the dissertation
+
+### 14 March 2024
+* *5 hours* Working on the dissertation
+* *1 hour* Adjusting details in the background section
+
+### 15 March 2024
+* *2 hours* Writing the implementation section
+
+### 17 March 2024
+* *2 hours* Working on the implementation section
+
+## Week 26
+### 18 March 2024
+* *2 hours* Adding the types of refactoring miner to the prompt
+* *2 hours* Adjusting code to account for the new prompt
+* *1 hour* Running the pipeline
+* *2 hours* Writing the dissertation
+
+### 19 March 2024
+* *5 hours* Writing the dissertation
+
+### 20 March 2024
+* *9 hours* Writing the dissertation
+
+### 21 March 2024
+* *3 hours* Writing the dissertation
+* *1 hour* Adding new tables
+
+### 22 March 2024
+* *6 hours* Working on the dissertation
+
+### 23 March 2024
+* *4 hours* Working on the dissertation
+
+## Week 27
+### 25 March 2024
+* *4 hours* Working on the dissertation
+
+### 26 March 2024
+* *3 hours* Working on the dissertation
+
+### 27 March 2024
+* *8 hours* Working on the dissertation
+* *3 hours* Adjusting tables and pasting them into the dissertation
+
+### 28 March 2024
+* *10 hours* Working on the dissertation
+* *1 hour* Changing the tables
+* *2 hours* Doing the admin changes and writing readMe
+* *1 hour* Preparing the presentation
+
+
+
+
+
+
+
