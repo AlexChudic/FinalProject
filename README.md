@@ -19,6 +19,8 @@ To be able to run all of the Python scripts and Jupyter notebooks, make sure to 
 ### Repository sampling
 The process of retrieving the population of the repositories and performing the sampling is documented in file [src/get_samples.ipynb](https://github.com/AlexChudic/FinalProject/blob/main/src/get_samples.ipynb)
 
+The list with sampled repositories used for the assessment of the refactoring skill in our evaluation is stored in file [data/evaluate_repositories.json](https://github.com/AlexChudic/FinalProject/blob/main/data/evaluate_repositories.json)
+
 ### Sonarqube and SonarScanner setup
 1. [Download](https://docs.sonarsource.com/sonarqube/latest/try-out-sonarqube/#installing-a-local-instance-of-sonarqube) and install a local instance of Sonarqube
 2. Run Sonarqube in terminal - `<PATH_TO_SONARQUBE>/bin` 
@@ -32,10 +34,16 @@ The process of retrieving the population of the repositories and performing the 
 
 For Mac, it's possible to use [Homebrew](https://techblost.com/how-to-setup-sonarqube-locally-on-mac/) for easier installation process (steps 1-6 are sufficient)
 
+### Running the pipeline
+To run the pipeline, you will need to follow these steps: 
+1. Follow the instructions on setting up Sonarqube and SonarScanner above
+2. Make sure the correct version of Java is installed.
+3. Populate the `src/.env` file with the correct API keys and credentials
+4. Now you can run the pipeline by running main method in [App.java](https://github.com/AlexChudic/FinalProject/blob/main/src/data-mining/mining/src/main/java/refactoring_mining/App.java)
+
 
 ### Running the sub-modules
-It is possible to run submodules on its own from the terminal. Make sure these commands are executed from the root repository folder
-
+It is possible to run submodules on its own from the terminal. Make sure these commands are executed from the root repository folde
 - Use `python src/evaluation.py refactoring-data/<repositoryName>` for generating the evaluation metrics for the generated refactoring jsons
 - Use `python src/useGPT.py refactoring-data/<refactoringJsonPath>` for prompting the GPT3.5 Turbo about how to refactor the code
 
