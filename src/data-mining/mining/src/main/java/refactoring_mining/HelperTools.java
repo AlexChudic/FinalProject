@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.CheckoutCommand;
@@ -189,6 +191,17 @@ public class HelperTools {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public static List<String> getFileNamesInFolder(String folderPath){
+        List<String> files = new ArrayList<>();
+        try (Stream<Path> paths = Files.walk(Paths.get(folderPath))) {
+            paths.filter(Files::isRegularFile)
+                .forEach(path -> files.add(path.getFileName().toString()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return files;
     }
 
     public static void createFolder(String folderPath){

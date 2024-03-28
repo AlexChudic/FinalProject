@@ -22,6 +22,11 @@ def construct_simple_prompt(file, type="simple"):
             {"role": "system", "content": "You are a code quality analyst. Pay close attention to the maintainability, code smells, and complexity. Your goal is to decide if refactoring is required and if so, what type of refactoring is needed. No explanations are needed."},
             {"role": "user", "content": "Does this class require refactoring? Only answer 'YES, refactoring required=<<<REFACTORING_TYPES>>>' or 'NO'. For the answer 'YES' replace the <<<REFACTORING_TYPES>>> with the refactoring types required separated by a semi-colon. No explanation is needed.:\n\n" + file },
         ]
+    elif type == "getTypeOfRefactoringPromptVersion2":
+        msg = [
+            {"role": "system", "content": "You are a code quality analyst. Pay close attention to the maintainability, code smells, and complexity. Your goal is to decide if refactoring is required and if so, what type of refactoring is needed. No explanations are needed. Only consider these refactoring types: Extract Method; Inline Method; Rename Method; Move Method; Move Attribute; Pull Up Method; Pull Up Attribute; Push Down Method; Push Down Attribute; Extract Superclass; Extract Interface; Move Class; Rename Class; Extract and Move Method; Rename Package; Move and Rename Class; Extract Class; Extract Subclass; Extract Variable; Inline Variable; Parameterize Variable; Rename Variable; Rename Parameter; Rename Attribute; Move and Rename Attribute; Replace Variable with Attribute; Replace Attribute ; Merge Variable; Merge Parameter; Merge Attribute; Split Variable; Split Parameter; Split Attribute; Change Variable Type; Change Parameter Type; Change Return Type; Change Attribute Type; Extract Attribute; Move and Rename Method; Move and Inline Method; Add Method Annotation; Remove Method Annotation; Modify Method Annotation; Add Attribute Annotation; Remove Attribute Annotation; Modify Attribute Annotation; Add Class Annotation; Remove Class Annotation; Modify Class Annotation; Add Parameter Annotation; Remove Parameter Annotation; Modify Parameter Annotation; Add Variable Annotation; Remove Variable Annotation; Modify Variable Annotation; Add Parameter; Remove Parameter; Reorder Parameter; Add Thrown Exception Type; Remove Thrown Exception Type; Change Thrown Exception Type; Change Method Access Modifier; Change Attribute Access Modifier; Encapsulate Attribute; Parameterize Attribute; Replace Attribute with Variable; Add Method Modifier; Remove Method Modifier; Add Attribute Modifier; Remove Attribute Modifier; Add Variable Modifier; Add Parameter Modifier; Remove Variable Modifier; Remove Parameter Modifier; Change Class Access Modifier; Add Class Modifier; Remove Class Modifier; Move Package; Split Package; Merge Package; Localize Parameter; Change Type Declaration Kind; Collapse Hierarchy; Replace Loop with Pipeline; Replace Anonymous with Lambda; Merge Class; Inline Attribute; Replace Pipeline with Loop; Split Class; Split Conditional; Invert Condition; Merge Conditional; Merge Catch; Merge Method; Split Method; Move Code; Replace Anonymous with Class; Parameterize Test; Assert Throws"},
+            {"role": "user", "content": "Does this class require refactoring? Only answer 'YES, refactoring required=<<<REFACTORING_TYPES>>>' or 'NO'. For the answer 'YES' replace the <<<REFACTORING_TYPES>>> with the refactoring types required separated by a semi-colon. No explanation is needed.:\n\n" + file },
+        ]
     return msg
     
 def try_prompting(prompt, args, count=0):
@@ -100,6 +105,30 @@ def JSON_to_dataFrame(JSON_path):
         print(f"Error: {e}")
         return None
 
+def add_new_LLM_refactorings_to_dataFrame(JSON_path, args=None):
+    start_time = time.time()
+    refactoring = JSON_to_dataFrame(JSON_path)
+    if args is None:
+        args = init_args()
+    if refactoring is not None and isSingleFileRefactoring(refactoring):
+        if 'LLMRefactoring' in refactoring:
+            if 'typeOfRefactoringNew' in refactoring['LLMRefactoring']:
+                print(f"New LLM Refactoring already generated for {JSON_path}.")
+                return
+            elif "beforeRefactoring" in refactoring and "file" in refactoring["beforeRefactoring"]:
+                print(f"NEW: Processing the json file using gpt-3.5-turbo-0125: {JSON_path} ")
+                prompt = construct_simple_prompt(join_file(refactoring["beforeRefactoring"]["file"]), "getTypeOfRefactoringPromptVersion2")
+                LLM_answer = try_prompting(prompt, args)
+                refactoring['LLMRefactoring']['typeOfRefactoringNew'] = LLM_answer
+                with open(JSON_path, 'w') as json_file:
+                    json.dump(refactoring, json_file, indent=4)
+                print(f"DataFrame {JSON_path} successfully saved!")
+        else:
+            print(f"LLMRefactoring does not exist in JSON file: {JSON_path}")
+    else:
+        print(f"Invalid JSON file: {JSON_path}")
+    print(f"Time taken to process single json: {round(time.time() - start_time, 2)} seconds.")
+            
 
 def get_LLM_refactorings_for_file(JSON_path, args=None):
     start_time = time.time()
@@ -135,7 +164,8 @@ def prompt_directory_refactorings(directory_path):
     for filename in os.listdir(directory_path):
         if filename[-4:] == "json":
             file_path = directory_path + "/" + filename
-            get_LLM_refactorings_for_file(file_path, args)
+            #get_LLM_refactorings_for_file(file_path, args)
+            add_new_LLM_refactorings_to_dataFrame(file_path, args)
     print(f"Time taken to process directory: {round(time.time() - start_time, 2)} seconds.")
 
 def handle_terminal_input(**args):
@@ -169,7 +199,6 @@ if __name__ == "__main__":
         else:
             get_LLM_refactorings_for_file(JSON_path)
     else:
-        # prompt_directory_refactorings("refactoring-data/refactoring-toy-example")
         for repoName in os.listdir("refactoring-data"):
             repo_path = "refactoring-data/" + repoName
             if os.path.isdir(repo_path):
