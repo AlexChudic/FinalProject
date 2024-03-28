@@ -14,6 +14,11 @@ We will conduct experiments with (novice and experienced) developers to gain ins
 The link to read the dissertation: https://www.overleaf.com/read/vnkqzdphxfmv#afd5e7
 
 ## Setup and Compilation
+To be able to run all of the Python scripts and Jupyter notebooks, make sure to download all required packages. This can be done by running this command in the root folder of the repository: `pip install -r requirements.txt`
+
+### Repository sampling
+The process of retrieving the population of the repositories and performing the sampling is documented in file [src/get_samples.ipynb](https://github.com/AlexChudic/FinalProject/blob/main/src/get_samples.ipynb)
+
 ### Sonarqube and SonarScanner setup
 1. [Download](https://docs.sonarsource.com/sonarqube/latest/try-out-sonarqube/#installing-a-local-instance-of-sonarqube) and install a local instance of Sonarqube
 2. Run Sonarqube in terminal - `<PATH_TO_SONARQUBE>/bin` 
@@ -28,7 +33,9 @@ The link to read the dissertation: https://www.overleaf.com/read/vnkqzdphxfmv#af
 For Mac, it's possible to use [Homebrew](https://techblost.com/how-to-setup-sonarqube-locally-on-mac/) for easier installation process (steps 1-6 are sufficient)
 
 
-### Running the modules
-It is possible to run submodules on its own from the terminal. Make sure these commands are executed from the root repository folder.
+### Running the sub-modules
+It is possible to run submodules on its own from the terminal. Make sure these commands are executed from the root repository folder
+
 - Use `python src/evaluation.py refactoring-data/<repositoryName>` for generating the evaluation metrics for the generated refactoring jsons
-- Use `python src/useGPT.py refactoring-data/<refactoringJsonPath>` for prompting the GPT3.5 Turbo about how to refactor the code 
+- Use `python src/useGPT.py refactoring-data/<refactoringJsonPath>` for prompting the GPT3.5 Turbo about how to refactor the code
+
