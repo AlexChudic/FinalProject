@@ -196,3 +196,9 @@
     - Make sure to compare the LLM proposed refactoring type with the refactoring type performed by the developer - what RefactoringMiner detected
     - Run the pipeline on as many repositories as possible
     - Change the structure of the table displaying refactoring metrics
+
+
+## Meeting 15 - 8.3.2024
+- I talked about the progress on the dissertation
+- Should focus on showing my results are statistically significant
+- Explored ways we can answer the RQ 1.2 -> I should add the refactoring types RefactoringMiner recognises to the prompt, so I can later match the type performed by the developer with the one suggested by the LLM
