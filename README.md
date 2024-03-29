@@ -50,3 +50,6 @@ It is possible to run submodules on its own from the terminal. Make sure these c
 - Use `python src/useGPT.py` for prompting all of the generated JSON refactorings using the GPT3.5 Turbo
     - Note: make sure to populate `src/.env` file with your OPENAI API key
     - Optionally use `python src/useGPT.py refactoring-data/<refactoringJsonPath>` for prompting a single refactoring JSON the GPT3.5 Turbo
+
+## Contact
+If you have any trouble running the code, please get in touch with me at 2525381c@student.gla.ac.uk
